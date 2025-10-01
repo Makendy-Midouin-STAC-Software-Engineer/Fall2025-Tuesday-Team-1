@@ -1,0 +1,26 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>NYC Restaurant Search</title>
+    <link rel="stylesheet" type="text/css" href="{% static 'inspections/style.css' %}">
+</head>
+<body>
+    <div class="container">
+        <h1>Search NYC Restaurants</h1>
+        <form method="get">
+            <input type="text" name="q" placeholder="Restaurant name..." value="{{ query }}">
+            <button type="submit">Search</button>
+        </form>
+
+        <h2>Results ({{ results.count }})</h2>
+        <ul>
+            {% for r in results %}
+                <li>{{ r.DBA }} - {{ r.BORO }} - Grade: {{ r.GRADE }} - Score: {{ r.SCORE }}</li>
+            {% empty %}
+                <li>No results found</li>
+            {% endfor %}
+        </ul>
+    </div>
+</body>
+</html>
