@@ -1,5 +1,4 @@
 Django==5.2.6
 whitenoise==6.11.0
-bcrypt==5.0.0      # only if you use it for password hashing
-psycopg2-binary==2.9.6  # if using Postgres, otherwise omit
-gunicorn==21.2.0   # WSGI server
+bcrypt==5.0.0       # only if you use it for password hashing
+gunicorn==21.2.0    # WSGI server
