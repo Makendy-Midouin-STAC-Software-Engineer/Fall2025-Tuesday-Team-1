@@ -8,8 +8,9 @@ __pycache__/
 # Django
 *.log
 *.pot
-*.py[cod]
-db.sqlite3
+*.pyc
+*.pyo
+*.pyd
 media
 staticfiles
 
@@ -19,3 +20,8 @@ venv/
 
 # VSCode
 .vscode/
+
+# Elastic Beanstalk Files
+.elasticbeanstalk/*
+!.elasticbeanstalk/*.cfg.yml
+!.elasticbeanstalk/*.global.yml

@@ -1,26 +1,78 @@
 {% load static %}
+{% load extra_filters %}
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
     <title>NYC Restaurant Search</title>
     <link rel="stylesheet" type="text/css" href="{% static 'inspections/style.css' %}">
+    <script>
+    document.addEventListener("DOMContentLoaded", () => {
+        document.querySelectorAll(".restaurant-header").forEach(header => {
+            header.addEventListener("click", () => {
+                const content = header.nextElementSibling;
+                content.classList.toggle("active");
+
+                // Animate the dropdown smoothly
+                if (content.classList.contains("active")) {
+                    content.style.maxHeight = content.scrollHeight + "px";
+                    content.style.opacity = "1";
+                } else {
+                    content.style.maxHeight = "0";
+                    content.style.opacity = "0";
+                }
+            });
+        });
+    });
+</script>
 </head>
-<body>
+<body class="dark-mode">
     <div class="container">
-        <h1>Search NYC Restaurants</h1>
+        <h1>NYC Restaurant Search</h1>
+
+        <!-- Search form -->
         <form method="get">
             <input type="text" name="q" placeholder="Restaurant name..." value="{{ query }}">
             <button type="submit">Search</button>
         </form>
 
-        <h2>Results ({{ results.count }})</h2>
-        <ul>
-            {% for r in results %}
-                <li>{{ r.DBA }} - {{ r.BORO }} - Grade: {{ r.GRADE }} - Score: {{ r.SCORE }}</li>
-            {% empty %}
-                <li>No results found</li>
-            {% endfor %}
-        </ul>
+        <!-- Conditional Results -->
+        {% if query %}
+            <h2>Results ({{ restaurants|length }})</h2>
+
+            {% if restaurants %}
+                <ul class="restaurant-list">
+                    {% for r in restaurants %}
+                        <li class="restaurant-item">
+                            <div class="restaurant-header">
+                                <strong>{{ r.info.DBA }}</strong> — {{ r.info.BORO }}
+                                <span class="details">
+                                    Cuisine: {{ r.info.CUISINE_DESCRIPTION }} |
+                                    Grade: {{ r.info.GRADE }} |
+                                    Score: {{ r.info.SCORE }}
+                                </span>
+                            </div>
+
+                            <div class="restaurant-content">
+                                {% for insp in r.citations %}
+                                    <div class="inspection-entry">
+                                        <p><b>Date:</b> {{ insp.INSPECTION_DATE }}</p>
+                                        <p><b>Action:</b> {{ insp.ACTION }}</p>
+                                        <p><b>Violation:</b> {{ insp.VIOLATION_DESCRIPTION }}</p>
+                                        <p><b>Critical:</b> {{ insp.CRITICAL_FLAG }}</p>
+                                        <hr>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p>No results found for “{{ query }}”.</p>
+            {% endif %}
+        {% else %}
+            <h2>Enter a restaurant name to begin your search</h2>
+        {% endif %}
     </div>
 </body>
 </html>
