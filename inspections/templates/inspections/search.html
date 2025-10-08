@@ -33,11 +33,19 @@
         <!-- Search form -->
         <form method="get">
             <input type="text" name="q" placeholder="Restaurant name..." value="{{ query }}">
+            <select name="cuisine">
+                <option value="">All Cuisines</option>
+                {% for c in all_cuisines %}
+                    <option value="{{ c }}" {% if cuisine == c %}selected{% endif %}>
+                        {{ c }}
+                    </option>
+                {% endfor %}
+            </select>
             <button type="submit">Search</button>
         </form>
 
         <!-- Conditional Results -->
-        {% if query %}
+        {% if query or cuisine %}
             <h2>Results ({{ restaurants|length }})</h2>
 
             {% if restaurants %}
@@ -71,7 +79,7 @@
                 <p>No results found for “{{ query }}”.</p>
             {% endif %}
         {% else %}
-            <h2>Enter a restaurant name to begin your search</h2>
+            <h2>Enter a restaurant name or select a cuisine to begin your search</h2>
         {% endif %}
     </div>
 </body>
