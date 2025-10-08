@@ -53,7 +53,10 @@
                     {% for r in restaurants %}
                         <li class="restaurant-item">
                             <div class="restaurant-header">
-                                <strong>{{ r.info.DBA }}</strong> — {{ r.info.BORO }}
+                                <div class="restaurant-name-address">
+                                    <strong>{{ r.info.DBA }}</strong>
+                                    <span class="address">{{ r.info.BUILDING }} {{ r.info.STREET }}, {{ r.info.BORO }}{% if r.info.ZIPCODE %} {{ r.info.ZIPCODE|floatformat:0 }}{% endif %}</span>
+                                </div>
                                 <span class="details">
                                     Cuisine: {{ r.info.CUISINE_DESCRIPTION }} |
                                     Grade: {{ r.info.GRADE }} |
@@ -76,7 +79,7 @@
                     {% endfor %}
                 </ul>
             {% else %}
-                <p>No results found for “{{ query }}”.</p>
+                <p>No results found{% if query %} for "{{ query }}"{% endif %}{% if cuisine %} in {{ cuisine }} cuisine{% endif %}.</p>
             {% endif %}
         {% else %}
             <h2>Enter a restaurant name or select a cuisine to begin your search</h2>

@@ -130,9 +130,25 @@ button:hover {
     background-color: #2a2a31;
 }
 
+.restaurant-name-address {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.restaurant-name-address strong {
+    font-size: 1.1em;
+}
+
+.address {
+    color: #9ca3af;
+    font-size: 0.85em;
+}
+
 .details {
     color: #8beaff;
     font-size: 0.9em;
+    white-space: nowrap;
 }
 
 /* Dropdown content (animated) */
