@@ -5,7 +5,7 @@
 <head>
     <meta charset="UTF-8">
     <title>NYC Restaurant Search</title>
-<link rel="stylesheet" href="{% static 'inspections/style.css' %}">
+    <link rel="stylesheet" href="{% static 'inspections/style.css' %}">
     <script>
     document.addEventListener("DOMContentLoaded", () => {
         document.querySelectorAll(".restaurant-header").forEach(header => {
@@ -23,8 +23,25 @@
                 }
             });
         });
+
+        // Auto-submit when cuisine changes
+        const cuisineSelect = document.querySelector('select[name="cuisine"]');
+        if (cuisineSelect) {
+            cuisineSelect.addEventListener('change', () => {
+                // Ensure the select is inside a form before submitting
+                if (cuisineSelect.form) cuisineSelect.form.submit();
+            });
+        }
+        // Auto-submit when borough changes
+        const boroughSelect = document.querySelector('select[name="borough"]');
+        if (boroughSelect) {
+            boroughSelect.addEventListener('change', () => {
+                // Ensure the select is inside a form before submitting
+                if (boroughSelect.form) boroughSelect.form.submit();
+            });
+        }
     });
-</script>
+    </script>
 </head>
 <body class="dark-mode">
     <div class="container">
@@ -33,11 +50,29 @@
         <!-- Search form -->
         <form method="get">
             <input type="text" name="q" placeholder="Restaurant name..." value="{{ query }}">
+            <input type="text" name="zipcode" placeholder="Zipcode" value="{{ zipcode }}">
+            <select name="cuisine">
+                <option value="">All Types</option>
+                {% for cuisine in cuisines %}
+                    <option value="{{ cuisine }}" {% if cuisine == selected_cuisine %}selected{% endif %}>
+                        {{ cuisine }}
+                    </option>
+                {% endfor %}
+            </select>
+            <select name="borough">
+                <option value="">All Boroughs</option>
+                {% for borough in boroughs %}
+                    <option value="{{ borough }}" {% if borough == selected_borough %}selected{% endif %}>
+                        {{ borough }}
+                    </option>
+                {% endfor %}
+            </select>
             <button type="submit">Search</button>
         </form>
 
         <!-- Conditional Results -->
-        {% if query %}
+        {% comment %} Show results when any filter/search input is present {% endcomment %}
+        {% if query or selected_cuisine or selected_borough or zipcode %}
             <h2>Results ({{ restaurants|length }})</h2>
 
             {% if restaurants %}
@@ -68,10 +103,16 @@
                     {% endfor %}
                 </ul>
             {% else %}
-                <p>No results found for “{{ query }}”.</p>
+                <p>
+                    No results found
+                    {% if query %} for “{{ query }}”{% endif %}
+                    {% if selected_cuisine %}{% if query %}, {% else %} for {% endif %}cuisine “{{ selected_cuisine }}”{% endif %}
+                    {% if selected_borough %}{% if query or selected_cuisine %}, {% else %} for {% endif %}borough “{{ selected_borough }}”{% endif %}
+                    {% if zipcode %}{% if query or selected_cuisine or selected_borough %}, {% else %} for {% endif %}zipcode “{{ zipcode }}”{% endif %}.
+                </p>
             {% endif %}
         {% else %}
-            <h2>Enter a restaurant name to begin your search</h2>
+            <h2>Enter a restaurant name, select a cuisine/borough, or type a zipcode to begin your search</h2>
         {% endif %}
     </div>
 </body>

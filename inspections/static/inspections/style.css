@@ -32,17 +32,20 @@ h2 {
     margin-top: 10px;
 }
 
-/* Search bar */
-form {
+/* === SEARCH FORM === */
+.search-form {
     display: flex;
     justify-content: center;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: nowrap; /* keep on one line */
     margin-bottom: 20px;
 }
 
-input[type="text"] {
-    width: 70%;
-    padding: 12px 16px;
-    border-radius: 8px 0 0 8px;
+.search-form input[type="text"],
+.search-form select {
+    padding: 10px 14px;
+    border-radius: 8px;
     border: 1px solid #333;
     background-color: #0e0e11;
     color: #fff;
@@ -51,12 +54,26 @@ input[type="text"] {
     transition: 0.3s ease;
 }
 
-input[type="text"]:focus {
+.search-form input[type="text"]:focus,
+.search-form select:focus {
     border-color: #00ffa2;
     box-shadow: 0 0 8px rgba(0,255,162,0.5);
 }
 
-button {
+/* Field widths */
+.search-form input[name="q"] {
+    width: 240px;
+}
+.search-form input[name="zipcode"] {
+    width: 100px;
+}
+.search-form select[name="cuisine"],
+.search-form select[name="borough"] {
+    width: 160px;
+}
+
+/* Button */
+.search-form button {
     padding: 12px 20px;
     border: none;
     background: linear-gradient(90deg, #00e0ff, #00ffa2);
@@ -65,8 +82,10 @@ button {
     border-radius: 0 8px 8px 0;
     cursor: pointer;
     transition: all 0.3s ease;
+    flex-shrink: 0;
 }
-button:hover {
+
+.search-form button:hover {
     transform: scale(1.05);
     box-shadow: 0 0 12px #00ffa2;
 }
