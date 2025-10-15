@@ -1,0 +1,17 @@
+# Exclude common junk
+.git/
+.elasticbeanstalk/logs/**
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.log
+.DS_Store
+node_modules/
+.venv/
+.env
+.env.*
+
+# Do NOT exclude the SQLite database
+# (intentionally include db.sqlite3 in the EB bundle)
+!db.sqlite3
