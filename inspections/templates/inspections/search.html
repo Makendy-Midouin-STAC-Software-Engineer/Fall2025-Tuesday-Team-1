@@ -50,11 +50,12 @@
         <!-- Search form -->
         <form method="get">
             <input type="text" name="q" placeholder="Restaurant name..." value="{{ query }}">
+            <input type="text" name="z" placeholder="Zipcode" value="{{ zipcode }}">
             <select name="cuisine">
                 <option value="">All Cuisines</option>
-                {% for cuisine in cuisines %}
-                    <option value="{{ cuisine }}" {% if cuisine == selected_cuisine %}selected{% endif %}>
-                        {{ cuisine }}
+                {% for c in cuisines %}
+                    <option value="{{ c }}" {% if c == selected_cuisine %}selected{% endif %}>
+                        {{ c }}
                     </option>
                 {% endfor %}
             </select>

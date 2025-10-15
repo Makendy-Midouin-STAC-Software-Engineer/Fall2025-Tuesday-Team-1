@@ -7,7 +7,7 @@ def search_restaurants(request):
     query = request.GET.get('q', '').strip()
     selected_cuisine = request.GET.get('cuisine', '').strip()
     selected_borough = request.GET.get('borough', '').strip()
-    zipcode = request.GET.get('zipcode', '').strip()
+    zipcode = request.GET.get('z', '').strip()
 
     cuisines = (
         RestaurantInspection.objects
