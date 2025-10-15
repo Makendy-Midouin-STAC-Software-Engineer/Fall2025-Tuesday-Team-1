@@ -1,4 +1,5 @@
 from django.shortcuts import render
+from django.db.models import Q
 from inspections.models import RestaurantInspection
 from collections import OrderedDict
 
@@ -28,22 +29,28 @@ def search_restaurants(request):
 
     restaurants = []  # nothing by default
 
-    inspections = RestaurantInspection.objects.all()
+    # Build filter conditions
+    filter_conditions = Q()
+        
+    if query:
+        filter_conditions &= Q(DBA__icontains=query)
 
     if selected_cuisine:
-        inspections = inspections.filter(CUISINE_DESCRIPTION__iexact=selected_cuisine)
+        filter_conditions &= Q(CUISINE_DESCRIPTION__iexact=selected_cuisine)
 
     if selected_borough:
-        inspections = inspections.filter(BORO__iexact=selected_borough)
-
-    if query:
-        inspections = inspections.filter(DBA__icontains=query)
+        filter_conditions &= Q(BORO__iexact=selected_borough)
 
     if zipcode:
-        inspections = inspections.filter(ZIPCODE__icontains=zipcode)
+        filter_conditions &= Q(ZIPCODE__icontains=zipcode)
 
-    if selected_cuisine or query or selected_borough or zipcode:
-        inspections = inspections.order_by('DBA', 'INSPECTION_DATE')
+    if filter_conditions:
+        inspections = (
+            RestaurantInspection.objects
+            .filter(filter_conditions)
+            .order_by('DBA', 'INSPECTION_DATE')
+        )
+
         grouped = OrderedDict()
         for insp in inspections:
             if insp.CAMIS not in grouped:

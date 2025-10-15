@@ -50,9 +50,8 @@
         <!-- Search form -->
         <form method="get">
             <input type="text" name="q" placeholder="Restaurant name..." value="{{ query }}">
-            <input type="text" name="zipcode" placeholder="Zipcode" value="{{ zipcode }}">
             <select name="cuisine">
-                <option value="">All Types</option>
+                <option value="">All Cuisines</option>
                 {% for cuisine in cuisines %}
                     <option value="{{ cuisine }}" {% if cuisine == selected_cuisine %}selected{% endif %}>
                         {{ cuisine }}
@@ -80,7 +79,10 @@
                     {% for r in restaurants %}
                         <li class="restaurant-item">
                             <div class="restaurant-header">
-                                <strong>{{ r.info.DBA }}</strong> — {{ r.info.BORO }}
+                                <div class="restaurant-name-address">
+                                    <strong>{{ r.info.DBA }}</strong>
+                                    <span class="address">{{ r.info.BUILDING }} {{ r.info.STREET }}, {{ r.info.BORO }}{% if r.info.ZIPCODE %} {{ r.info.ZIPCODE|floatformat:0 }}{% endif %}</span>
+                                </div>
                                 <span class="details">
                                     Cuisine: {{ r.info.CUISINE_DESCRIPTION }} |
                                     Grade: {{ r.info.GRADE }} |
