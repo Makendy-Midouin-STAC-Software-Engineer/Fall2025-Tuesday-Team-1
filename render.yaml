@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: nyc-restaurants
+    env: python
+    buildCommand: pip install -r requirements.txt && python manage.py collectstatic --noinput
+    preDeployCommand: python manage.py migrate --noinput
+    startCommand: gunicorn --bind 0.0.0.0:$PORT --workers 3 --threads 2 nyc_restaurants.wsgi:application
+    autoDeploy: true
+    envVars:
+      - key: DJANGO_SECRET_KEY
+        generateValue: true
+      - key: DJANGO_DEBUG
+        value: "False"
+      - key: DJANGO_ALLOWED_HOSTS
+        value: nyc-restaurants.onrender.com
+      - key: DJANGO_CSRF_TRUSTED_ORIGINS
+        value: https://nyc-restaurants.onrender.com

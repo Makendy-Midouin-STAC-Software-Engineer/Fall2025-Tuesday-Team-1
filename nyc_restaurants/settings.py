@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 from pathlib import Path
 import os
+from urllib.parse import urlparse
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -21,17 +22,19 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-65a%ceg#3mcmqn=&wo89)0gh0n1b-r@@6g+6cqc7!-x4q!ck=6'
+# Read from environment in production; fallback only for local dev
+SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'django-insecure-65a%ceg#3mcmqn=&wo89)0gh0n1b-r@@6g+6cqc7!-x4q!ck=6')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv('DJANGO_DEBUG', 'True').lower() in ('1', 'true', 'yes')
 
-ALLOWED_HOSTS = [
-    'nyc-app-env.eba-mivrpamz.us-east-1.elasticbeanstalk.com',
-    'localhost',
-    '127.0.0.1',
-    '172.31.11.29',  # EC2 private IP
-]
+def _split_env_list(value: str):
+    return [h.strip() for h in value.split(',') if h.strip()]
+
+ALLOWED_HOSTS = _split_env_list(os.getenv('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1'))
+
+# Trusted origins for CSRF when behind a proxy/hosted domain
+CSRF_TRUSTED_ORIGINS = _split_env_list(os.getenv('DJANGO_CSRF_TRUSTED_ORIGINS', ''))
 
 # Application definition
 
@@ -85,6 +88,13 @@ DATABASES = {
         'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
+
+# Honor X-Forwarded-Proto/SSL when behind a proxy (e.g., Render/Heroku)
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+# Use secure cookies when not in DEBUG
+SESSION_COOKIE_SECURE = not DEBUG
+CSRF_COOKIE_SECURE = not DEBUG
 
 
 # Password validation
