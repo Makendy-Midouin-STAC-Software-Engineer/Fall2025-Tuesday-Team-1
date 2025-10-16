@@ -27,10 +27,11 @@ SECRET_KEY = 'django-insecure-65a%ceg#3mcmqn=&wo89)0gh0n1b-r@@6g+6cqc7!-x4q!ck=6
 DEBUG = True
 
 ALLOWED_HOSTS = [
-    'nyc-app-env.eba-mivrpamz.us-east-1.elasticbeanstalk.com',
+    'nyc-restaurants-fresh.eba-nfmqf9hf.us-east-1.elasticbeanstalk.com',
     'localhost',
     '127.0.0.1',
     '172.31.11.29',  # EC2 private IP
+    '*',  # Allow all hosts as fallback
 ]
 
 # Application definition
@@ -47,7 +48,8 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware', 
+    'nyc_restaurants.middleware.DisableHostCheckMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',

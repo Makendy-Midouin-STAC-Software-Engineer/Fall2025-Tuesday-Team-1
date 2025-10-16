@@ -38,8 +38,7 @@ h2 {
     justify-content: center;
     align-items: center;
     gap: 10px;
-    flex-wrap: nowrap; /* keep on one line */
-    gap: 10px;
+    flex-wrap: wrap; /* Allow wrapping on smaller screens */
     margin-bottom: 20px;
 }
 
@@ -48,6 +47,7 @@ h2 {
     padding: 10px 14px;
     border-radius: 8px;
     border: 1px solid #333;
+    min-width: 120px;
     background-color: #0e0e11;
     color: #fff;
     font-size: 16px;
@@ -195,4 +195,249 @@ select option {
 }
 .inspection-entry p {
     margin: 4px 0;
+}
+
+/* === RATINGS AND REVIEWS STYLES === */
+
+/* Restaurant rating display */
+.restaurant-rating {
+    margin: 8px 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.stars {
+    color: #ffd700;
+    font-size: 1.2em;
+    text-shadow: 0 0 5px rgba(255, 215, 0, 0.5);
+}
+
+.rating-text {
+    color: #b0b0ff;
+    font-size: 0.9em;
+}
+
+.no-rating {
+    color: #888;
+    font-style: italic;
+}
+
+/* Grade styling */
+.grade-A {
+    color: #4CAF50;
+    font-weight: bold;
+}
+
+.grade-B {
+    color: #FF9800;
+    font-weight: bold;
+}
+
+.grade-C {
+    color: #f44336;
+    font-weight: bold;
+}
+
+/* Reviews section */
+.reviews-section {
+    background-color: #1a1a1e;
+    padding: 15px;
+    margin: 15px 0;
+    border-radius: 8px;
+    border-left: 3px solid #00e0ff;
+}
+
+.reviews-section h4 {
+    color: #00e0ff;
+    margin-top: 0;
+}
+
+.review-item {
+    background-color: #252529;
+    padding: 12px;
+    margin: 10px 0;
+    border-radius: 6px;
+    border-left: 2px solid #444;
+}
+
+.review-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.reviewer {
+    font-weight: bold;
+    color: #b0b0ff;
+}
+
+.review-rating {
+    color: #ffd700;
+}
+
+.review-date {
+    color: #888;
+    font-size: 0.85em;
+}
+
+.review-text {
+    color: #e4e4eb;
+    line-height: 1.4;
+    margin: 0;
+}
+
+/* Add review form */
+.add-review-section {
+    background-color: #1a1a1e;
+    padding: 15px;
+    margin: 15px 0;
+    border-radius: 8px;
+    border-left: 3px solid #4CAF50;
+}
+
+.add-review-section h4 {
+    color: #4CAF50;
+    margin-top: 0;
+}
+
+.review-form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.form-row {
+    display: flex;
+    gap: 10px;
+}
+
+.reviewer-input,
+.rating-select {
+    flex: 1;
+    padding: 8px 12px;
+    background-color: #202024;
+    color: #e4e4eb;
+    border: 1px solid #333;
+    border-radius: 6px;
+}
+
+.review-textarea {
+    padding: 12px;
+    background-color: #202024;
+    color: #e4e4eb;
+    border: 1px solid #333;
+    border-radius: 6px;
+    min-height: 80px;
+    resize: vertical;
+}
+
+.submit-review-btn {
+    padding: 10px 20px;
+    background: linear-gradient(145deg, #4CAF50, #45a049);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.3s ease;
+}
+
+.submit-review-btn:hover {
+    background: linear-gradient(145deg, #45a049, #3d8b40);
+    box-shadow: 0 0 10px rgba(76, 175, 80, 0.3);
+}
+
+/* Inspection history section */
+.inspection-history {
+    background-color: #1a1a1e;
+    padding: 15px;
+    margin: 15px 0;
+    border-radius: 8px;
+    border-left: 3px solid #b0b0ff;
+}
+
+.inspection-history h4 {
+    color: #b0b0ff;
+    margin-top: 0;
+}
+
+.inspection-header {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.inspection-date {
+    color: #00e0ff;
+    font-weight: bold;
+}
+
+.inspection-score {
+    color: #ffd700;
+}
+
+.violation,
+.action {
+    margin: 5px 0;
+    font-size: 0.9em;
+    line-height: 1.3;
+}
+
+/* Success page styling */
+.success-message {
+    background-color: #1a4f1a;
+    padding: 20px;
+    border-radius: 8px;
+    border-left: 4px solid #4CAF50;
+    margin: 20px 0;
+    text-align: center;
+}
+
+.navigation {
+    text-align: center;
+    margin-top: 20px;
+}
+
+.btn {
+    display: inline-block;
+    padding: 12px 24px;
+    background: linear-gradient(145deg, #00e0ff, #0099cc);
+    color: white;
+    text-decoration: none;
+    border-radius: 8px;
+    font-weight: bold;
+    transition: all 0.3s ease;
+}
+
+.btn:hover {
+    background: linear-gradient(145deg, #0099cc, #0066aa);
+    box-shadow: 0 0 15px rgba(0, 224, 255, 0.4);
+}
+
+/* Restaurant info row with view details button */
+.restaurant-info-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+}
+
+.view-details-btn {
+    background: linear-gradient(145deg, #b0b0ff, #8080dd);
+    color: white;
+    padding: 6px 12px;
+    border-radius: 6px;
+    text-decoration: none;
+    font-size: 0.9em;
+    font-weight: bold;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+}
+
+.view-details-btn:hover {
+    background: linear-gradient(145deg, #8080dd, #6060bb);
+    box-shadow: 0 0 10px rgba(176, 176, 255, 0.3);
 }

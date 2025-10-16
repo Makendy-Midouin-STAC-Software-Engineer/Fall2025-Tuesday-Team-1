@@ -28,16 +28,23 @@
         const cuisineSelect = document.querySelector('select[name="cuisine"]');
         if (cuisineSelect) {
             cuisineSelect.addEventListener('change', () => {
-                // Ensure the select is inside a form before submitting
                 if (cuisineSelect.form) cuisineSelect.form.submit();
             });
         }
+        
         // Auto-submit when borough changes
         const boroughSelect = document.querySelector('select[name="borough"]');
         if (boroughSelect) {
             boroughSelect.addEventListener('change', () => {
-                // Ensure the select is inside a form before submitting
                 if (boroughSelect.form) boroughSelect.form.submit();
+            });
+        }
+        
+        // Auto-submit when sort changes
+        const sortSelect = document.querySelector('select[name="sort_by"]');
+        if (sortSelect) {
+            sortSelect.addEventListener('change', () => {
+                if (sortSelect.form) sortSelect.form.submit();
             });
         }
     });
@@ -50,29 +57,35 @@
         <!-- Search form -->
         <form method="get" class="search-form">
             <input type="text" name="q" placeholder="Restaurant name..." value="{{ query }}">
-            <input type="text" name="z" placeholder="Zipcode" value="{{ zipcode }}">
+            <input type="text" name="zipcode" placeholder="Zipcode" value="{{ zipcode }}">
             <select name="cuisine">
                 <option value="">All Cuisines</option>
-                {% for c in cuisines %}
-                    <option value="{{ c }}" {% if c == selected_cuisine %}selected{% endif %}>
+                {% for c in all_cuisines %}
+                    <option value="{{ c }}" {% if c == cuisine %}selected{% endif %}>
                         {{ c }}
                     </option>
                 {% endfor %}
             </select>
             <select name="borough">
                 <option value="">All Boroughs</option>
-                {% for borough in boroughs %}
-                    <option value="{{ borough }}" {% if borough == selected_borough %}selected{% endif %}>
-                        {{ borough }}
+                {% for b in all_boroughs %}
+                    <option value="{{ b }}" {% if b == borough %}selected{% endif %}>
+                        {{ b }}
                     </option>
                 {% endfor %}
+            </select>
+            <select name="sort_by">
+                <option value="name" {% if sort_by == 'name' %}selected{% endif %}>Sort by Name</option>
+                <option value="rating_high" {% if sort_by == 'rating_high' %}selected{% endif %}>Highest Rating</option>
+                <option value="rating_low" {% if sort_by == 'rating_low' %}selected{% endif %}>Lowest Rating</option>
+                <option value="grade" {% if sort_by == 'grade' %}selected{% endif %}>Best Grade (A-C)</option>
+                <option value="latest_inspection" {% if sort_by == 'latest_inspection' %}selected{% endif %}>Latest Inspection</option>
             </select>
             <button type="submit">Search</button>
         </form>
 
         <!-- Conditional Results -->
-        {% comment %} Show results when any filter/search input is present {% endcomment %}
-        {% if query or selected_cuisine or selected_borough or zipcode %}
+        {% if query or cuisine or zipcode or borough %}
             <h2>Results ({{ restaurants|length }})</h2>
 
             {% if restaurants %}
@@ -81,26 +94,93 @@
                         <li class="restaurant-item">
                             <div class="restaurant-header">
                                 <div class="restaurant-name-address">
-                                    <strong>{{ r.info.DBA }}</strong>
+                                    <strong><a href="{% url 'restaurant_detail' r.info.CAMIS %}" style="color: #00e0ff; text-decoration: none;">{{ r.info.DBA }}</a></strong>
                                     <span class="address">{{ r.info.BUILDING }} {{ r.info.STREET }}, {{ r.info.BORO }}{% if r.info.ZIPCODE %} {{ r.info.ZIPCODE|floatformat:0 }}{% endif %}</span>
                                 </div>
-                                <span class="details">
-                                    Cuisine: {{ r.info.CUISINE_DESCRIPTION }} |
-                                    Grade: {{ r.info.GRADE }} |
-                                    Score: {{ r.info.SCORE }}
-                                </span>
+                                <div class="restaurant-rating">
+                                    {% if r.rating.stars > 0 %}
+                                        <span class="stars">
+                                            {% for i in "12345" %}
+                                                {% if forloop.counter <= r.rating.stars %}★{% else %}☆{% endif %}
+                                            {% endfor %}
+                                        </span>
+                                        <span class="rating-text">{{ r.rating.stars }}/5 ({{ r.rating.description }})</span>
+                                    {% else %}
+                                        <span class="no-rating">No graded inspections</span>
+                                    {% endif %}
+                                </div>
+                                <div class="restaurant-info-row">
+                                    <span class="details">
+                                        Cuisine: {{ r.info.CUISINE_DESCRIPTION }} |
+                                        Latest Grade: {{ r.rating.grade }} |
+                                        Inspections: {{ r.rating.inspection_count }}
+                                    </span>
+                                    <a href="{% url 'restaurant_detail' r.info.CAMIS %}" class="view-details-btn">View Details →</a>
+                                </div>
                             </div>
 
                             <div class="restaurant-content">
-                                {% for insp in r.citations %}
-                                    <div class="inspection-entry">
-                                        <p><b>Date:</b> {{ insp.INSPECTION_DATE }}</p>
-                                        <p><b>Action:</b> {{ insp.ACTION }}</p>
-                                        <p><b>Violation:</b> {{ insp.VIOLATION_DESCRIPTION }}</p>
-                                        <p><b>Critical:</b> {{ insp.CRITICAL_FLAG }}</p>
-                                        <hr>
+                                <!-- Reviews Section -->
+                                {% if r.reviews %}
+                                    <div class="reviews-section">
+                                        <h4>Recent Reviews:</h4>
+                                        {% for review in r.reviews %}
+                                            <div class="review-item">
+                                                <div class="review-header">
+                                                    <span class="reviewer">{{ review.reviewer_name }}</span>
+                                                    <span class="review-rating">{{ review.stars_display }}</span>
+                                                    <span class="review-date">{{ review.review_date|date:"M d, Y" }}</span>
+                                                </div>
+                                                <p class="review-text">{{ review.review_text }}</p>
+                                            </div>
+                                        {% endfor %}
                                     </div>
-                                {% endfor %}
+                                {% endif %}
+
+                                <!-- Add Review Form -->
+                                <div class="add-review-section">
+                                    <h4>Add Your Review:</h4>
+                                    <form method="post" action="{% url 'add_review' %}" class="review-form">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="camis" value="{{ r.info.CAMIS }}">
+                                        <input type="hidden" name="restaurant_name" value="{{ r.info.DBA }}">
+                                        
+                                        <div class="form-row">
+                                            <input type="text" name="reviewer_name" placeholder="Your name (optional)" class="reviewer-input">
+                                            <select name="rating" required class="rating-select">
+                                                <option value="">Rate this restaurant</option>
+                                                <option value="5">★★★★★ Excellent</option>
+                                                <option value="4">★★★★☆ Good</option>
+                                                <option value="3">★★★☆☆ Average</option>
+                                                <option value="2">★★☆☆☆ Poor</option>
+                                                <option value="1">★☆☆☆☆ Terrible</option>
+                                            </select>
+                                        </div>
+                                        
+                                        <textarea name="review_text" placeholder="Share your experience..." required class="review-textarea"></textarea>
+                                        <button type="submit" class="submit-review-btn">Submit Review</button>
+                                    </form>
+                                </div>
+
+                                <!-- Inspection History -->
+                                <div class="inspection-history">
+                                    <h4>Recent Inspections:</h4>
+                                    {% for insp in r.citations|slice:":5" %}
+                                        <div class="inspection-entry">
+                                            <div class="inspection-header">
+                                                <span class="inspection-date">{{ insp.INSPECTION_DATE }}</span>
+                                                <span class="inspection-grade grade-{{ insp.GRADE }}">Grade: {{ insp.GRADE }}</span>
+                                                {% if insp.SCORE %}<span class="inspection-score">Score: {{ insp.SCORE }}</span>{% endif %}
+                                            </div>
+                                            {% if insp.VIOLATION_DESCRIPTION %}
+                                                <p class="violation"><b>Violation:</b> {{ insp.VIOLATION_DESCRIPTION }}</p>
+                                            {% endif %}
+                                            {% if insp.ACTION %}
+                                                <p class="action"><b>Action:</b> {{ insp.ACTION }}</p>
+                                            {% endif %}
+                                        </div>
+                                    {% endfor %}
+                                </div>
                             </div>
                         </li>
                     {% endfor %}
@@ -109,13 +189,13 @@
                 <p>
                     No results found
                     {% if query %} for "{{ query }}"{% endif %}
-                    {% if selected_cuisine %}{% if query %}, {% else %} for {% endif %}cuisine "{{ selected_cuisine }}"{% endif %}
-                    {% if selected_borough %}{% if query or selected_cuisine %}, {% else %} for {% endif %}borough "{{ selected_borough }}"{% endif %}
-                    {% if zipcode %}{% if query or selected_cuisine or selected_borough %}, {% else %} for {% endif %}zipcode "{{ zipcode }}"{% endif %}.
+                    {% if cuisine %}{% if query %}, {% else %} for {% endif %}cuisine "{{ cuisine }}"{% endif %}
+                    {% if zipcode %}{% if query or cuisine %}, {% else %} for {% endif %}zipcode "{{ zipcode }}"{% endif %}
+                    {% if borough %}{% if query or cuisine or zipcode %}, {% else %} for {% endif %}borough "{{ borough }}"{% endif %}.
                 </p>
             {% endif %}
         {% else %}
-            <h2>Ready to explore? Search by restaurant name, cuisine, borough, or zipcode.</h2>
+            <h2>Ready to explore? Search by restaurant name, cuisine, zipcode, or borough.</h2>
         {% endif %}
     </div>
 </body>
