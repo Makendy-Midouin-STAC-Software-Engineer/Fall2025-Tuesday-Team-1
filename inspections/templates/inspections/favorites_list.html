@@ -1,0 +1,164 @@
+{% load static %}
+{% load extra_filters %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>My Favorite Restaurants - NYC Restaurant Search</title>
+    <link rel="stylesheet" href="{% static 'inspections/style.css' %}">
+    <script>
+    document.addEventListener("DOMContentLoaded", () => {
+        // Handle favorite button clicks (remove from favorites)
+        document.querySelectorAll('.favorite-btn').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                const camis = btn.dataset.camis;
+                const name = btn.dataset.name;
+                
+                try {
+                    const formData = new FormData();
+                    formData.append('camis', camis);
+                    formData.append('restaurant_name', name);
+                    formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+                    
+                    const response = await fetch('{% url "toggle_favorite" %}', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (response.ok && !data.is_favorited) {
+                        // Remove the restaurant from the page
+                        btn.closest('.favorite-restaurant-item').remove();
+                        
+                        // Update count
+                        const countEl = document.querySelector('.favorites-count');
+                        if (countEl) {
+                            const currentCount = parseInt(countEl.textContent);
+                            countEl.textContent = currentCount - 1;
+                        }
+                        
+                        // Show empty message if no favorites left
+                        const remainingItems = document.querySelectorAll('.favorite-restaurant-item');
+                        if (remainingItems.length === 0) {
+                            document.querySelector('.favorites-list').innerHTML = `
+                                <div class="no-favorites">
+                                    <p>You haven't saved any favorite restaurants yet.</p>
+                                    <a href="{% url 'search_restaurants' %}" class="search-btn">Search Restaurants</a>
+                                </div>
+                            `;
+                        }
+                        
+                        showMessage(data.message);
+                    }
+                } catch (error) {
+                    console.error('Error removing favorite:', error);
+                    showMessage('Error removing from favorites');
+                }
+            });
+        });
+        
+        // Message display function
+        function showMessage(text) {
+            const msg = document.createElement('div');
+            msg.textContent = text;
+            msg.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: #00e0ff;
+                color: #000;
+                padding: 10px 15px;
+                border-radius: 5px;
+                z-index: 1000;
+                animation: slideIn 0.3s ease;
+            `;
+            document.body.appendChild(msg);
+            setTimeout(() => msg.remove(), 3000);
+        }
+    });
+    </script>
+</head>
+<body class="dark-mode">
+    <div class="container">
+        <h1>❤️ My Favorite Restaurants</h1>
+        
+        <!-- Navigation -->
+        <div class="navigation">
+            <a href="{% url 'search_restaurants' %}" class="nav-link">
+                ← Back to Search
+            </a>
+        </div>
+        
+        <!-- CSRF token for AJAX requests -->
+        {% csrf_token %}
+
+        {% if favorite_restaurants %}
+            <div class="favorites-header">
+                <p>You have <span class="favorites-count">{{ total_favorites }}</span> favorite restaurant{{ total_favorites|pluralize }}.</p>
+            </div>
+            
+            <div class="favorites-list">
+                {% for fav_data in favorite_restaurants %}
+                    <div class="favorite-restaurant-item">
+                        <div class="restaurant-header">
+                            <div class="restaurant-name-address">
+                                <strong>
+                                    <a href="{% url 'restaurant_detail' fav_data.restaurant.CAMIS %}" style="color: #00e0ff; text-decoration: none;">
+                                        {{ fav_data.restaurant.DBA }}
+                                    </a>
+                                </strong>
+                                <span class="address">
+                                    {{ fav_data.restaurant.BUILDING }} {{ fav_data.restaurant.STREET }}, {{ fav_data.restaurant.BORO }}
+                                    {% if fav_data.restaurant.ZIPCODE %} {{ fav_data.restaurant.ZIPCODE|floatformat:0 }}{% endif %}
+                                </span>
+                                <span class="favorite-date">Added to favorites: {{ fav_data.favorite.date_added|date:"M d, Y" }}</span>
+                            </div>
+                            
+                            <div class="restaurant-rating">
+                                {% if fav_data.rating.stars > 0 %}
+                                    <span class="stars">
+                                        {% for i in "12345" %}
+                                            {% if forloop.counter <= fav_data.rating.stars %}★{% else %}☆{% endif %}
+                                        {% endfor %}
+                                    </span>
+                                    <span class="rating-text">{{ fav_data.rating.stars }}/5 ({{ fav_data.rating.description }})</span>
+                                {% else %}
+                                    <span class="no-rating">No graded inspections</span>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="restaurant-info-row">
+                                <span class="details">
+                                    Cuisine: {{ fav_data.restaurant.CUISINE_DESCRIPTION }} |
+                                    Latest Grade: {{ fav_data.rating.grade }} |
+                                    Inspections: {{ fav_data.rating.inspection_count }}
+                                </span>
+                                <div class="restaurant-actions">
+                                    <button class="favorite-btn favorited" 
+                                            data-camis="{{ fav_data.restaurant.CAMIS }}" 
+                                            data-name="{{ fav_data.restaurant.DBA }}"
+                                            title="Remove from favorites">
+                                        <span class="heart">❤️</span>
+                                    </button>
+                                    <a href="{% url 'restaurant_detail' fav_data.restaurant.CAMIS %}" class="view-details-btn">View Details →</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+            
+        {% else %}
+            <div class="no-favorites">
+                <p>You haven't saved any favorite restaurants yet.</p>
+                <p>Search for restaurants and click the heart button to add them to your favorites!</p>
+                <a href="{% url 'search_restaurants' %}" class="search-btn">Search Restaurants</a>
+            </div>
+        {% endif %}
+    </div>
+</body>
+</html>

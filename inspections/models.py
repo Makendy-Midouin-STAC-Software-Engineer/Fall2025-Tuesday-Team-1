@@ -201,4 +201,19 @@ class RestaurantDetails(models.Model):
         return weekly_hours
 
 
+class FavoriteRestaurant(models.Model):
+    """Track user's favorite restaurants using session ID for anonymous users"""
+    session_key = models.CharField(max_length=40)  # Django session key
+    camis = models.BigIntegerField()  # Restaurant identifier
+    restaurant_name = models.CharField(max_length=255)
+    date_added = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        unique_together = ('session_key', 'camis')  # Prevent duplicate favorites
+        ordering = ['-date_added']
+    
+    def __str__(self):
+        return f"Favorite: {self.restaurant_name} (Session: {self.session_key[:8]}...)"
+
+
 

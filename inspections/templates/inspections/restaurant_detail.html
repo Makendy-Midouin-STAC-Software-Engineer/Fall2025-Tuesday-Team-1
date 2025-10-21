@@ -1,0 +1,439 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ restaurant.DBA }} - NYC Restaurant Details</title>
+    <link rel="stylesheet" href="{% static 'inspections/style.css' %}">
+    <style>
+        .detail-header {
+            background: linear-gradient(135deg, #1a1a1e 0%, #2a2a2e 100%);
+            padding: 30px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            border-left: 4px solid #00e0ff;
+        }
+        
+        .restaurant-title {
+            font-size: 2.5em;
+            color: #00e0ff;
+            margin-bottom: 10px;
+            text-shadow: 0 0 10px rgba(0, 224, 255, 0.3);
+        }
+        
+        .detail-section {
+            background-color: #1a1a1e;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 10px;
+            border-left: 3px solid #b0b0ff;
+        }
+        
+        .section-title {
+            color: #00e0ff;
+            font-size: 1.4em;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .hours-grid {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 10px;
+            margin: 10px 0;
+        }
+        
+        .day-label {
+            font-weight: bold;
+            color: #b0b0ff;
+        }
+        
+        .hours-value {
+            color: #e4e4eb;
+        }
+        
+        .contact-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 15px 0;
+        }
+        
+        .contact-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            background-color: #202024;
+            border-radius: 6px;
+        }
+        
+        .status-open {
+            color: #4CAF50;
+            font-weight: bold;
+        }
+        
+        .status-closed {
+            color: #f44336;
+            font-weight: bold;
+        }
+        
+        .back-link {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: #00e0ff;
+            text-decoration: none;
+            padding: 8px 16px;
+            background-color: rgba(0, 224, 255, 0.1);
+            border-radius: 6px;
+            border: 1px solid rgba(0, 224, 255, 0.3);
+        }
+        
+        .back-link:hover {
+            background-color: rgba(0, 224, 255, 0.2);
+        }
+        
+        .inspection-summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin: 15px 0;
+        }
+        
+        .stat-card {
+            background-color: #202024;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #00e0ff;
+        }
+        
+        .stat-label {
+            color: #b0b0ff;
+            font-size: 0.9em;
+        }
+    </style>
+    <script>
+    document.addEventListener("DOMContentLoaded", () => {
+        // Handle favorite button clicks
+        document.querySelectorAll('.favorite-btn').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                const camis = btn.dataset.camis;
+                const name = btn.dataset.name;
+                
+                try {
+                    const formData = new FormData();
+                    formData.append('camis', camis);
+                    formData.append('restaurant_name', name);
+                    formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+                    
+                    const response = await fetch('{% url "toggle_favorite" %}', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (response.ok) {
+                        // Update button state
+                        const heart = btn.querySelector('.heart');
+                        if (data.is_favorited) {
+                            heart.textContent = '❤️';
+                            btn.classList.add('favorited');
+                            btn.title = 'Remove from favorites';
+                        } else {
+                            heart.textContent = '🤍';
+                            btn.classList.remove('favorited');
+                            btn.title = 'Add to favorites';
+                        }
+                        
+                        // Show brief message
+                        showMessage(data.message);
+                    }
+                } catch (error) {
+                    console.error('Error toggling favorite:', error);
+                    showMessage('Error updating favorites');
+                }
+            });
+        });
+        
+        // Message display function
+        function showMessage(text) {
+            const msg = document.createElement('div');
+            msg.textContent = text;
+            msg.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: #00e0ff;
+                color: #000;
+                padding: 10px 15px;
+                border-radius: 5px;
+                z-index: 1000;
+                animation: slideIn 0.3s ease;
+            `;
+            document.body.appendChild(msg);
+            setTimeout(() => msg.remove(), 3000);
+        }
+    });
+    </script>
+</head>
+<body class="dark-mode">
+    <div class="container">
+        <!-- CSRF token for AJAX requests -->
+        {% csrf_token %}
+        
+        <a href="{% url 'search_restaurants' %}" class="back-link">← Back to Search</a>
+        
+        <!-- Restaurant Header -->
+        <div class="detail-header">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
+                <h1 class="restaurant-title">{{ restaurant.DBA }}</h1>
+                <button class="favorite-btn {% if is_favorited %}favorited{% endif %}" 
+                        data-camis="{{ restaurant.CAMIS }}" 
+                        data-name="{{ restaurant.DBA }}"
+                        title="{% if is_favorited %}Remove from favorites{% else %}Add to favorites{% endif %}"
+                        style="font-size: 1.5em; background: none; border: none; cursor: pointer;">
+                    <span class="heart">{% if is_favorited %}❤️{% else %}🤍{% endif %}</span>
+                </button>
+            </div>
+            <div class="restaurant-rating">
+                {% if rating.stars > 0 %}
+                    <span class="stars">
+                        {% for i in "12345" %}
+                            {% if forloop.counter <= rating.stars %}★{% else %}☆{% endif %}
+                        {% endfor %}
+                    </span>
+                    <span class="rating-text">{{ rating.stars }}/5 ({{ rating.description }})</span>
+                {% else %}
+                    <span class="no-rating">No graded inspections</span>
+                {% endif %}
+                {% if details.is_open_now %}
+                    <span class="status-open">• Open Now</span>
+                {% else %}
+                    <span class="status-closed">• Closed</span>
+                {% endif %}
+            </div>
+            <div class="details">
+                <strong>Address:</strong> {{ restaurant.BUILDING }} {{ restaurant.STREET }}, {{ restaurant.BORO }}{% if restaurant.ZIPCODE %} {{ restaurant.ZIPCODE|floatformat:0 }}{% endif %}<br>
+                <strong>Cuisine:</strong> {{ restaurant.CUISINE_DESCRIPTION }}<br>
+                {% if restaurant.PHONE %}<strong>Phone:</strong> {{ restaurant.PHONE }}{% endif %}
+            </div>
+        </div>
+
+        <!-- Quick Stats -->
+        <div class="detail-section">
+            <h3 class="section-title">📊 Quick Stats</h3>
+            <div class="inspection-summary">
+                <div class="stat-card">
+                    <div class="stat-value">{{ rating.grade|default:"N/A" }}</div>
+                    <div class="stat-label">Latest Grade</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">{{ rating.inspection_count }}</div>
+                    <div class="stat-label">Total Inspections</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">{{ reviews.count }}</div>
+                    <div class="stat-label">User Reviews</div>
+                </div>
+                {% if rating.latest_inspection %}
+                <div class="stat-card">
+                    <div class="stat-value">{{ rating.latest_inspection|date:"M 'y" }}</div>
+                    <div class="stat-label">Last Inspected</div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Hours of Operation -->
+        <div class="detail-section">
+            <h3 class="section-title">🕐 Hours of Operation</h3>
+            {% if details.monday_hours %}
+                <div class="hours-grid">
+                    {% for day_info in details.get_weekly_hours %}
+                        <div class="day-label">{{ day_info.day }}:</div>
+                        <div class="hours-value">{{ day_info.hours }}</div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p>Hours information not available. <em>Restaurant owners can contact us to add this information.</em></p>
+            {% endif %}
+        </div>
+
+        <!-- Contact Information -->
+        <div class="detail-section">
+            <h3 class="section-title">📞 Contact Information</h3>
+            <div class="contact-info">
+                {% if restaurant.PHONE %}
+                <div class="contact-item">
+                    <span>📱</span>
+                    <div>
+                        <strong>Phone:</strong><br>
+                        {{ details.phone_formatted|default:restaurant.PHONE }}
+                    </div>
+                </div>
+                {% endif %}
+                
+                {% if details.website %}
+                <div class="contact-item">
+                    <span>🌐</span>
+                    <div>
+                        <strong>Website:</strong><br>
+                        <a href="{{ details.website }}" target="_blank" style="color: #00e0ff;">{{ details.website }}</a>
+                    </div>
+                </div>
+                {% endif %}
+                
+                {% if details.email %}
+                <div class="contact-item">
+                    <span>✉️</span>
+                    <div>
+                        <strong>Email:</strong><br>
+                        <a href="mailto:{{ details.email }}" style="color: #00e0ff;">{{ details.email }}</a>
+                    </div>
+                </div>
+                {% endif %}
+                
+                <div class="contact-item">
+                    <span>📍</span>
+                    <div>
+                        <strong>Address:</strong><br>
+                        {{ restaurant.BUILDING }} {{ restaurant.STREET }}<br>
+                        {{ restaurant.BORO }}, NY {% if restaurant.ZIPCODE %}{{ restaurant.ZIPCODE|floatformat:0 }}{% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Menu & Service Info -->
+        {% if details.menu_highlights or details.price_range or details.delivery_available or details.takeout_available %}
+        <div class="detail-section">
+            <h3 class="section-title">🍽️ Menu & Service</h3>
+            
+            {% if details.description %}
+                <p><strong>About:</strong> {{ details.description }}</p>
+            {% endif %}
+            
+            {% if details.menu_highlights %}
+                <p><strong>Menu Highlights:</strong> {{ details.menu_highlights }}</p>
+            {% endif %}
+            
+            {% if details.price_range %}
+                <p><strong>Price Range:</strong> {{ details.price_range }}</p>
+            {% endif %}
+            
+            <div class="contact-info">
+                {% if details.delivery_available %}
+                <div class="contact-item">
+                    <span>🚚</span>
+                    <div><strong>Delivery Available</strong></div>
+                </div>
+                {% endif %}
+                
+                {% if details.takeout_available %}
+                <div class="contact-item">
+                    <span>🥡</span>
+                    <div><strong>Takeout Available</strong></div>
+                </div>
+                {% endif %}
+                
+                {% if details.reservations_accepted %}
+                <div class="contact-item">
+                    <span>📅</span>
+                    <div><strong>Reservations Accepted</strong></div>
+                </div>
+                {% endif %}
+            </div>
+            
+            {% if details.special_features %}
+                <p><strong>Special Features:</strong> {{ details.special_features }}</p>
+            {% endif %}
+            
+            {% if details.parking_info %}
+                <p><strong>Parking:</strong> {{ details.parking_info }}</p>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        <!-- Reviews Section -->
+        <div class="detail-section">
+            <h3 class="section-title">⭐ Customer Reviews ({{ reviews.count }})</h3>
+            
+            {% if reviews %}
+                {% for review in reviews %}
+                <div class="review-item">
+                    <div class="review-header">
+                        <span class="reviewer">{{ review.reviewer_name }}</span>
+                        <span class="review-rating">{{ review.stars_display }}</span>
+                        <span class="review-date">{{ review.review_date|date:"M d, Y" }}</span>
+                    </div>
+                    <p class="review-text">{{ review.review_text }}</p>
+                </div>
+                {% endfor %}
+            {% else %}
+                <p>No reviews yet. Be the first to review this restaurant!</p>
+            {% endif %}
+            
+            <!-- Add Review Form -->
+            <div class="add-review-section">
+                <h4>Add Your Review:</h4>
+                <form method="post" action="{% url 'add_review' %}" class="review-form">
+                    {% csrf_token %}
+                    <input type="hidden" name="camis" value="{{ restaurant.CAMIS }}">
+                    <input type="hidden" name="restaurant_name" value="{{ restaurant.DBA }}">
+                    
+                    <div class="form-row">
+                        <input type="text" name="reviewer_name" placeholder="Your name (optional)" class="reviewer-input">
+                        <select name="rating" required class="rating-select">
+                            <option value="">Rate this restaurant</option>
+                            <option value="5">★★★★★ Excellent</option>
+                            <option value="4">★★★★☆ Good</option>
+                            <option value="3">★★★☆☆ Average</option>
+                            <option value="2">★★☆☆☆ Poor</option>
+                            <option value="1">★☆☆☆☆ Terrible</option>
+                        </select>
+                    </div>
+                    
+                    <textarea name="review_text" placeholder="Share your experience..." required class="review-textarea"></textarea>
+                    <button type="submit" class="submit-review-btn">Submit Review</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Recent Inspections -->
+        <div class="detail-section">
+            <h3 class="section-title">🔍 Recent Inspections</h3>
+            {% for inspection in all_inspections %}
+                <div class="inspection-entry">
+                    <div class="inspection-header">
+                        <span class="inspection-date">{{ inspection.INSPECTION_DATE }}</span>
+                        <span class="inspection-grade grade-{{ inspection.GRADE }}">Grade: {{ inspection.GRADE|default:"Pending" }}</span>
+                        {% if inspection.SCORE %}<span class="inspection-score">Score: {{ inspection.SCORE }}</span>{% endif %}
+                    </div>
+                    {% if inspection.VIOLATION_DESCRIPTION %}
+                        <p class="violation"><strong>Violation:</strong> {{ inspection.VIOLATION_DESCRIPTION }}</p>
+                    {% endif %}
+                    {% if inspection.ACTION %}
+                        <p class="action"><strong>Action:</strong> {{ inspection.ACTION }}</p>
+                    {% endif %}
+                </div>
+            {% endfor %}
+            
+            {% if total_inspections > 10 %}
+                <p><em>Showing 10 most recent inspections of {{ total_inspections }} total.</em></p>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>

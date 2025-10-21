@@ -1,0 +1,15 @@
+# Include database file for deployment
+!db.sqlite3
+
+# Exclude development files
+.git/
+.gitignore
+README.md
+.vscode/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.env
+venv/
+.venv/

@@ -9,7 +9,12 @@
     <script>
     document.addEventListener("DOMContentLoaded", () => {
         document.querySelectorAll(".restaurant-header").forEach(header => {
-            header.addEventListener("click", () => {
+            header.addEventListener("click", (e) => {
+                // Don't toggle if clicking on favorite button or links
+                if (e.target.closest('.favorite-btn') || e.target.closest('a')) {
+                    return;
+                }
+                
                 const content = header.nextElementSibling;
                 content.classList.toggle("active");
 
@@ -23,6 +28,70 @@
                 }
             });
         });
+
+        // Handle favorite button clicks
+        document.querySelectorAll('.favorite-btn').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                const camis = btn.dataset.camis;
+                const name = btn.dataset.name;
+                
+                try {
+                    const formData = new FormData();
+                    formData.append('camis', camis);
+                    formData.append('restaurant_name', name);
+                    formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+                    
+                    const response = await fetch('{% url "toggle_favorite" %}', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (response.ok) {
+                        // Update button state
+                        const heart = btn.querySelector('.heart');
+                        if (data.is_favorited) {
+                            heart.textContent = '❤️';
+                            btn.classList.add('favorited');
+                            btn.title = 'Remove from favorites';
+                        } else {
+                            heart.textContent = '🤍';
+                            btn.classList.remove('favorited');
+                            btn.title = 'Add to favorites';
+                        }
+                        
+                        // Show brief message
+                        showMessage(data.message);
+                    }
+                } catch (error) {
+                    console.error('Error toggling favorite:', error);
+                    showMessage('Error updating favorites');
+                }
+            });
+        });
+        
+        // Message display function
+        function showMessage(text) {
+            const msg = document.createElement('div');
+            msg.textContent = text;
+            msg.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: #00e0ff;
+                color: #000;
+                padding: 10px 15px;
+                border-radius: 5px;
+                z-index: 1000;
+                animation: slideIn 0.3s ease;
+            `;
+            document.body.appendChild(msg);
+            setTimeout(() => msg.remove(), 3000);
+        }
 
         // Auto-submit when cuisine changes
         const cuisineSelect = document.querySelector('select[name="cuisine"]');
@@ -53,6 +122,13 @@
 <body class="dark-mode">
     <div class="container">
         <h1>NYC Restaurant Search</h1>
+        
+        <!-- Navigation -->
+        <div class="navigation">
+            <a href="{% url 'favorites_list' %}" class="nav-link">
+                ❤️ My Favorites
+            </a>
+        </div>
 
         <!-- Search form -->
         <form method="get" class="search-form">
@@ -87,6 +163,12 @@
         <!-- Conditional Results -->
         {% if query or cuisine or zipcode or borough %}
             <h2>Results ({{ restaurants|length }})</h2>
+            
+            {% if results_limited %}
+                <div class="results-notice">
+                    <p>⚡ Showing first 50 restaurants for performance. Try more specific search terms to narrow results.</p>
+                </div>
+            {% endif %}
 
             {% if restaurants %}
                 <ul class="restaurant-list">
@@ -115,7 +197,15 @@
                                         Latest Grade: {{ r.rating.grade }} |
                                         Inspections: {{ r.rating.inspection_count }}
                                     </span>
-                                    <a href="{% url 'restaurant_detail' r.info.CAMIS %}" class="view-details-btn">View Details →</a>
+                                    <div class="restaurant-actions">
+                                        <button class="favorite-btn {% if r.is_favorited %}favorited{% endif %}" 
+                                                data-camis="{{ r.info.CAMIS }}" 
+                                                data-name="{{ r.info.DBA }}"
+                                                title="{% if r.is_favorited %}Remove from favorites{% else %}Add to favorites{% endif %}">
+                                            <span class="heart">{% if r.is_favorited %}❤️{% else %}🤍{% endif %}</span>
+                                        </button>
+                                        <a href="{% url 'restaurant_detail' r.info.CAMIS %}" class="view-details-btn">View Details →</a>
+                                    </div>
                                 </div>
                             </div>
 

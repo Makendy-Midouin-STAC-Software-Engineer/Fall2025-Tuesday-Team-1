@@ -1,8 +1,10 @@
 from django.shortcuts import render
-from inspections.models import RestaurantInspection, RestaurantReview
+from inspections.models import RestaurantInspection, RestaurantReview, FavoriteRestaurant
 from collections import OrderedDict
 from django.db.models import Q
 from datetime import datetime, date
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST
 
 def search_restaurants(request):
     query = request.GET.get('q', '').strip()
@@ -40,8 +42,17 @@ def search_restaurants(request):
         )
 
         grouped = OrderedDict()
+        processed_count = 0
+        max_restaurants = 50  # Limit to 50 restaurants for performance
+        
         for insp in inspections:
             if insp.CAMIS not in grouped:
+                # Stop processing if we've reached our limit
+                if processed_count >= max_restaurants:
+                    break
+                    
+                processed_count += 1
+                
                 # Get rating information for this restaurant
                 rating_info = RestaurantInspection.get_restaurant_rating(insp.CAMIS)
                 
@@ -50,11 +61,15 @@ def search_restaurants(request):
                     camis=insp.CAMIS
                 ).order_by('-review_date')[:3]  # Get 3 most recent reviews
                 
+                # Check if restaurant is favorited by current user
+                is_favorited = is_restaurant_favorited(request, insp.CAMIS)
+                
                 grouped[insp.CAMIS] = {
                     "info": insp,
                     "citations": [],
                     "rating": rating_info,
-                    "reviews": list(recent_reviews)
+                    "reviews": list(recent_reviews),
+                    "is_favorited": is_favorited
                 }
             grouped[insp.CAMIS]["citations"].append(insp)
 
@@ -103,6 +118,7 @@ def search_restaurants(request):
         "sort_by": sort_by,
         "all_cuisines": all_cuisines,
         "all_boroughs": all_boroughs,
+        "results_limited": len(restaurants) >= 50,  # Show message if results were limited
     }
     return render(request, "inspections/search.html", context)
 
@@ -162,6 +178,9 @@ def restaurant_detail(request, camis):
         )
         # Don't save it yet - just use for display
     
+    # Check if restaurant is favorited by current user
+    is_favorited = is_restaurant_favorited(request, camis)
+    
     context = {
         'restaurant': restaurant,
         'details': details,
@@ -169,6 +188,93 @@ def restaurant_detail(request, camis):
         'reviews': reviews,
         'all_inspections': all_inspections[:10],  # Limit to recent 10 inspections
         'total_inspections': all_inspections.count(),
+        'is_favorited': is_favorited,
     }
     
     return render(request, 'inspections/restaurant_detail.html', context)
+
+
+@require_POST
+def toggle_favorite(request):
+    """Toggle favorite status for a restaurant via AJAX"""
+    camis = request.POST.get('camis')
+    restaurant_name = request.POST.get('restaurant_name', '')
+    
+    if not camis:
+        return JsonResponse({'error': 'Invalid restaurant'}, status=400)
+    
+    # Ensure session exists
+    if not request.session.session_key:
+        request.session.create()
+    
+    session_key = request.session.session_key
+    
+    try:
+        # Check if already favorited
+        favorite = FavoriteRestaurant.objects.get(
+            session_key=session_key,
+            camis=camis
+        )
+        # Remove from favorites
+        favorite.delete()
+        is_favorited = False
+        message = f"Removed {restaurant_name} from favorites"
+    except FavoriteRestaurant.DoesNotExist:
+        # Add to favorites
+        FavoriteRestaurant.objects.create(
+            session_key=session_key,
+            camis=camis,
+            restaurant_name=restaurant_name
+        )
+        is_favorited = True
+        message = f"Added {restaurant_name} to favorites"
+    
+    return JsonResponse({
+        'is_favorited': is_favorited,
+        'message': message
+    })
+
+
+def favorites_list(request):
+    """Display user's favorite restaurants"""
+    # Ensure session exists
+    if not request.session.session_key:
+        request.session.create()
+    
+    session_key = request.session.session_key
+    
+    # Get user's favorites
+    favorites = FavoriteRestaurant.objects.filter(session_key=session_key)
+    
+    # Get detailed info for each favorite restaurant
+    favorite_restaurants = []
+    for fav in favorites:
+        # Get latest inspection info for this restaurant
+        restaurant = RestaurantInspection.objects.filter(CAMIS=fav.camis).first()
+        if restaurant:
+            # Get rating information
+            rating_info = RestaurantInspection.get_restaurant_rating(fav.camis)
+            
+            favorite_restaurants.append({
+                'favorite': fav,
+                'restaurant': restaurant,
+                'rating': rating_info
+            })
+    
+    context = {
+        'favorite_restaurants': favorite_restaurants,
+        'total_favorites': len(favorite_restaurants)
+    }
+    
+    return render(request, 'inspections/favorites_list.html', context)
+
+
+def is_restaurant_favorited(request, camis):
+    """Helper function to check if a restaurant is favorited by current user"""
+    if not request.session.session_key:
+        return False
+    
+    return FavoriteRestaurant.objects.filter(
+        session_key=request.session.session_key,
+        camis=camis
+    ).exists()

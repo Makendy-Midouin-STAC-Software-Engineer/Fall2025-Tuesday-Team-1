@@ -11,9 +11,8 @@ __pycache__/
 *.pyc
 *.pyo
 *.pyd
-*
-media
-staticfiles
+media/
+staticfiles/
 
 # Environment
 venv/
