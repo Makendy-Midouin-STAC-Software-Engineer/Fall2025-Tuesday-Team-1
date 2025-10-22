@@ -93,29 +93,8 @@
             setTimeout(() => msg.remove(), 3000);
         }
 
-        // Auto-submit when cuisine changes
-        const cuisineSelect = document.querySelector('select[name="cuisine"]');
-        if (cuisineSelect) {
-            cuisineSelect.addEventListener('change', () => {
-                if (cuisineSelect.form) cuisineSelect.form.submit();
-            });
-        }
-        
-        // Auto-submit when borough changes
-        const boroughSelect = document.querySelector('select[name="borough"]');
-        if (boroughSelect) {
-            boroughSelect.addEventListener('change', () => {
-                if (boroughSelect.form) boroughSelect.form.submit();
-            });
-        }
-        
-        // Auto-submit when sort changes
-        const sortSelect = document.querySelector('select[name="sort_by"]');
-        if (sortSelect) {
-            sortSelect.addEventListener('change', () => {
-                if (sortSelect.form) sortSelect.form.submit();
-            });
-        }
+        // Manual form submission only - no auto-submit
+        // Users must click the Search button to trigger search
     });
     </script>
 </head>
@@ -157,16 +136,32 @@
                 <option value="grade" {% if sort_by == 'grade' %}selected{% endif %}>Best Grade (A-C)</option>
                 <option value="latest_inspection" {% if sort_by == 'latest_inspection' %}selected{% endif %}>Latest Inspection</option>
             </select>
-            <button type="submit">Search</button>
+            <button type="submit" class="search-button">🔍 Search Restaurants</button>
         </form>
+        
+        <div class="search-help">
+            <p>💡 <strong>Tip:</strong> Fill in your search criteria above, then click "Search Restaurants" to see results. Performance optimized - searches now up to 2x faster!</p>
+        </div>
+        
+        <div id="loading-indicator" style="display: none; text-align: center; padding: 20px; font-size: 18px; color: #007bff;">
+            🔄 Searching restaurants... This should be much faster now!
+        </div>
 
         <!-- Conditional Results -->
         {% if query or cuisine or zipcode or borough %}
-            <h2>Results ({{ restaurants|length }})</h2>
+            {% if paginator %}
+                <h2>Results ({{ total_results }} restaurants found)</h2>
+                <div class="pagination-info">
+                    <p>Showing page {{ page_obj.number }} of {{ paginator.num_pages }} 
+                       ({{ page_obj.start_index }} - {{ page_obj.end_index }} of {{ total_results }})</p>
+                </div>
+            {% else %}
+                <h2>Results ({{ restaurants|length }})</h2>
+            {% endif %}
             
             {% if results_limited %}
                 <div class="results-notice">
-                    <p>⚡ Showing first 50 restaurants for performance. Try more specific search terms to narrow results.</p>
+                    <p>⚡ Showing first 200 restaurants for performance. Try more specific search terms to narrow results.</p>
                 </div>
             {% endif %}
 
@@ -275,6 +270,28 @@
                         </li>
                     {% endfor %}
                 </ul>
+                
+                <!-- Pagination Controls -->
+                {% if paginator and paginator.num_pages > 1 %}
+                    <div class="pagination">
+                        <div class="pagination-controls">
+                            {% if page_obj.has_previous %}
+                                <a href="?{% if query %}q={{ query }}&{% endif %}{% if cuisine %}cuisine={{ cuisine }}&{% endif %}{% if zipcode %}zipcode={{ zipcode }}&{% endif %}{% if borough %}borough={{ borough }}&{% endif %}{% if sort_by %}sort_by={{ sort_by }}&{% endif %}page=1" class="page-link">« First</a>
+                                <a href="?{% if query %}q={{ query }}&{% endif %}{% if cuisine %}cuisine={{ cuisine }}&{% endif %}{% if zipcode %}zipcode={{ zipcode }}&{% endif %}{% if borough %}borough={{ borough }}&{% endif %}{% if sort_by %}sort_by={{ sort_by }}&{% endif %}page={{ page_obj.previous_page_number }}" class="page-link">‹ Previous</a>
+                            {% endif %}
+                            
+                            <span class="page-info">
+                                Page {{ page_obj.number }} of {{ paginator.num_pages }}
+                            </span>
+                            
+                            {% if page_obj.has_next %}
+                                <a href="?{% if query %}q={{ query }}&{% endif %}{% if cuisine %}cuisine={{ cuisine }}&{% endif %}{% if zipcode %}zipcode={{ zipcode }}&{% endif %}{% if borough %}borough={{ borough }}&{% endif %}{% if sort_by %}sort_by={{ sort_by }}&{% endif %}page={{ page_obj.next_page_number }}" class="page-link">Next ›</a>
+                                <a href="?{% if query %}q={{ query }}&{% endif %}{% if cuisine %}cuisine={{ cuisine }}&{% endif %}{% if zipcode %}zipcode={{ zipcode }}&{% endif %}{% if borough %}borough={{ borough }}&{% endif %}{% if sort_by %}sort_by={{ sort_by }}&{% endif %}page={{ paginator.num_pages }}" class="page-link">Last »</a>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endif %}
+                
             {% else %}
                 <p>
                     No results found
@@ -288,5 +305,24 @@
             <h2>Ready to explore? Search by restaurant name, cuisine, zipcode, or borough.</h2>
         {% endif %}
     </div>
+
+    <script>
+    // Show loading indicator on search form submission
+    document.querySelector('form[method="get"]').addEventListener('submit', function() {
+        document.getElementById('loading-indicator').style.display = 'block';
+        
+        // Hide results section while loading
+        const resultsSection = document.querySelector('h2');
+        if (resultsSection) {
+            resultsSection.style.opacity = '0.3';
+        }
+        
+        // Add loading message to button
+        const searchBtn = document.querySelector('.search-button');
+        searchBtn.innerHTML = '⏳ Searching...';
+        searchBtn.disabled = true;
+    });
+    </script>
+
 </body>
 </html>

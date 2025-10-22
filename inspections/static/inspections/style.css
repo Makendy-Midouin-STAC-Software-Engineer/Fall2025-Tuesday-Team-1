@@ -133,6 +133,42 @@ select option {
     box-shadow: 0 0 12px #00ffa2;
 }
 
+/* Enhanced search button */
+.search-button {
+    padding: 14px 28px !important;
+    font-size: 1.1em !important;
+    border-radius: 8px !important;
+    background: linear-gradient(135deg, #00e0ff 0%, #00ffa2 100%) !important;
+    box-shadow: 0 0 15px rgba(0, 255, 162, 0.3) !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3) !important;
+}
+
+.search-button:hover {
+    transform: translateY(-2px) scale(1.05) !important;
+    box-shadow: 0 0 25px rgba(0, 255, 162, 0.5) !important;
+}
+
+/* Search help text */
+.search-help {
+    text-align: center;
+    margin: 15px 0 25px 0;
+    padding: 12px 20px;
+    background: linear-gradient(135deg, #1a1a1e 0%, #2a2a2e 100%);
+    border-radius: 8px;
+    border: 1px solid rgba(0, 255, 162, 0.2);
+}
+
+.search-help p {
+    margin: 0;
+    color: #b0b0ff;
+    font-size: 0.95em;
+}
+
+.search-help strong {
+    color: #00ffa2;
+    text-shadow: 0 0 5px rgba(0, 255, 162, 0.3);
+}
+
 /* === Restaurant list === */
 .restaurant-list {
     list-style: none;
@@ -626,4 +662,66 @@ select option {
         transform: translateX(0);
         opacity: 1;
     }
+}
+
+/* === PAGINATION STYLING === */
+
+.pagination-info {
+    text-align: center;
+    margin: 15px 0;
+    padding: 10px;
+    background-color: #1a1a1e;
+    border-radius: 6px;
+    border: 1px solid rgba(0, 255, 162, 0.2);
+}
+
+.pagination-info p {
+    color: #00ffa2;
+    margin: 0;
+    font-size: 0.9em;
+    font-weight: bold;
+}
+
+.pagination {
+    margin: 30px 0;
+    display: flex;
+    justify-content: center;
+}
+
+.pagination-controls {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 15px 25px;
+    background: linear-gradient(135deg, #1a1a1e 0%, #2a2a2e 100%);
+    border-radius: 12px;
+    border: 1px solid rgba(0, 255, 255, 0.2);
+    box-shadow: 0 0 15px rgba(0, 255, 255, 0.1);
+}
+
+.page-link {
+    display: inline-block;
+    padding: 8px 16px;
+    background: linear-gradient(90deg, #00e0ff, #00ffa2);
+    color: #000;
+    text-decoration: none;
+    border-radius: 6px;
+    font-weight: bold;
+    font-size: 0.9em;
+    transition: all 0.3s ease;
+    text-shadow: none;
+}
+
+.page-link:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0 12px rgba(0, 255, 162, 0.4);
+    filter: brightness(1.1);
+}
+
+.page-info {
+    color: #00e0ff;
+    font-weight: bold;
+    font-size: 1em;
+    text-shadow: 0 0 5px rgba(0, 224, 255, 0.3);
+    padding: 0 10px;
 }

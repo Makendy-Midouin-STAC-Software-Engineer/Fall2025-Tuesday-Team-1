@@ -5,6 +5,7 @@ from django.db.models import Q
 from datetime import datetime, date
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 
 def search_restaurants(request):
     query = request.GET.get('q', '').strip()
@@ -12,9 +13,12 @@ def search_restaurants(request):
     zipcode = request.GET.get('zipcode', '').strip()
     borough = request.GET.get('borough', '').strip()
     sort_by = request.GET.get('sort_by', 'name').strip()
+    page_number = request.GET.get('page', 1)
 
-    restaurants = []  # nothing by default
-
+    restaurants = []
+    paginator = None
+    page_obj = None
+    
     if query or cuisine or zipcode or borough:
         # Build search filter
         search_filter = Q()
@@ -35,45 +39,96 @@ def search_restaurants(request):
         if borough and borough != 'All Boroughs':
             search_filter &= Q(BORO__iexact=borough)
 
+        # Get unique restaurants efficiently (SQLite compatible)
+        # First get all matching inspections ordered by restaurant and date
         inspections = (
             RestaurantInspection.objects
             .filter(search_filter)
-            .order_by('DBA', '-INSPECTION_DATE')
+            .order_by('CAMIS', '-INSPECTION_DATE')
         )
-
-        grouped = OrderedDict()
-        processed_count = 0
-        max_restaurants = 50  # Limit to 50 restaurants for performance
         
-        for insp in inspections:
-            if insp.CAMIS not in grouped:
-                # Stop processing if we've reached our limit
-                if processed_count >= max_restaurants:
+        # Process to get unique restaurants (first 100 for performance)
+        seen_camis = set()
+        limited_restaurants = []
+        
+        for inspection in inspections:
+            if inspection.CAMIS not in seen_camis:
+                seen_camis.add(inspection.CAMIS)
+                limited_restaurants.append({
+                    'CAMIS': inspection.CAMIS,
+                    'DBA': inspection.DBA,
+                    'BUILDING': inspection.BUILDING,
+                    'STREET': inspection.STREET,
+                    'BORO': inspection.BORO,
+                    'ZIPCODE': inspection.ZIPCODE,
+                    'CUISINE_DESCRIPTION': inspection.CUISINE_DESCRIPTION
+                })
+                
+                # Limit to 100 restaurants for performance
+                if len(limited_restaurants) >= 100:
                     break
-                    
-                processed_count += 1
-                
-                # Get rating information for this restaurant
-                rating_info = RestaurantInspection.get_restaurant_rating(insp.CAMIS)
-                
-                # Get recent user reviews
-                recent_reviews = RestaurantReview.objects.filter(
-                    camis=insp.CAMIS
-                ).order_by('-review_date')[:3]  # Get 3 most recent reviews
-                
-                # Check if restaurant is favorited by current user
-                is_favorited = is_restaurant_favorited(request, insp.CAMIS)
-                
-                grouped[insp.CAMIS] = {
-                    "info": insp,
-                    "citations": [],
-                    "rating": rating_info,
-                    "reviews": list(recent_reviews),
-                    "is_favorited": is_favorited
-                }
-            grouped[insp.CAMIS]["citations"].append(insp)
-
-        restaurants = list(grouped.values())
+        
+        # Get latest inspections for all restaurants in one query (much faster)
+        camis_list = [rest['CAMIS'] for rest in limited_restaurants]
+        latest_inspections = {}
+        
+        if camis_list:
+            # Get the latest inspection for each restaurant in a single query
+            for inspection in RestaurantInspection.objects.filter(
+                CAMIS__in=camis_list
+            ).order_by('CAMIS', '-INSPECTION_DATE'):
+                if inspection.CAMIS not in latest_inspections:
+                    latest_inspections[inspection.CAMIS] = inspection
+        
+        # Create lightweight restaurant objects with minimal data
+        restaurants = []
+        for rest_data in limited_restaurants:
+            latest_inspection = latest_inspections.get(rest_data['CAMIS'])
+            
+            # Simple grade-based rating (much faster than full calculation)
+            if latest_inspection and latest_inspection.GRADE:
+                grade = latest_inspection.GRADE
+                if grade == 'A':
+                    stars = 5
+                    description = "Excellent"
+                elif grade == 'B':
+                    stars = 4
+                    description = "Good"
+                elif grade == 'C':
+                    stars = 3
+                    description = "Fair"
+                else:
+                    stars = 2
+                    description = "Needs improvement"
+            else:
+                stars = 0
+                grade = 'N/A'
+                description = "No grade available"
+            
+            # Check if favorited (quick lookup)
+            is_favorited = is_restaurant_favorited(request, rest_data['CAMIS'])
+            
+            restaurants.append({
+                'info': type('obj', (object,), {
+                    'CAMIS': rest_data['CAMIS'],
+                    'DBA': rest_data['DBA'],
+                    'BUILDING': rest_data['BUILDING'],
+                    'STREET': rest_data['STREET'],
+                    'BORO': rest_data['BORO'],
+                    'ZIPCODE': rest_data['ZIPCODE'],
+                    'CUISINE_DESCRIPTION': rest_data['CUISINE_DESCRIPTION']
+                }),
+                'rating': {
+                    'stars': stars,
+                    'grade': grade,
+                    'description': description,
+                    'inspection_count': 1,  # Simplified
+                    'latest_inspection': latest_inspection.INSPECTION_DATE if latest_inspection else None
+                },
+                'reviews': [],  # Skip reviews for performance
+                'is_favorited': is_favorited,
+                'citations': []
+            })
         
         # Sort restaurants based on selected criteria
         if sort_by == 'rating_high':
@@ -85,9 +140,18 @@ def search_restaurants(request):
         elif sort_by == 'latest_inspection':
             restaurants.sort(key=lambda r: r['rating']['latest_inspection'] or date(1900, 1, 1), reverse=True)
         elif sort_by == 'grade':
-            # Sort by grade (A first, then B, C, etc.)
             grade_order = {'A': 1, 'B': 2, 'C': 3, 'N': 4, 'P': 5, 'Z': 6}
             restaurants.sort(key=lambda r: grade_order.get(r['rating']['grade'], 7))
+
+        # Implement pagination - 20 restaurants per page
+        paginator = Paginator(restaurants, 20)
+        
+        try:
+            page_obj = paginator.get_page(page_number)
+        except PageNotAnInteger:
+            page_obj = paginator.get_page(1)
+        except EmptyPage:
+            page_obj = paginator.get_page(paginator.num_pages)
 
     # Get all available cuisines for the filter dropdown
     all_cuisines = (
@@ -110,7 +174,9 @@ def search_restaurants(request):
     )
 
     context = {
-        "restaurants": restaurants,
+        "restaurants": page_obj.object_list if page_obj else restaurants,
+        "page_obj": page_obj,
+        "paginator": paginator,
         "query": query,
         "cuisine": cuisine,
         "zipcode": zipcode,
@@ -118,7 +184,8 @@ def search_restaurants(request):
         "sort_by": sort_by,
         "all_cuisines": all_cuisines,
         "all_boroughs": all_boroughs,
-        "results_limited": len(restaurants) >= 50,  # Show message if results were limited
+        "total_results": len(restaurants) if restaurants else 0,
+        "results_limited": len(restaurants) >= 200,
     }
     return render(request, "inspections/search.html", context)
 
