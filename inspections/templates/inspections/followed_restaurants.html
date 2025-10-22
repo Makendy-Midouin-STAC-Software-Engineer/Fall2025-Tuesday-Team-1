@@ -1,0 +1,256 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Followed Restaurants - NYC Restaurant Inspections</title>
+    <link rel="stylesheet" href="{% static 'inspections/style.css' %}">
+</head>
+<body class="dark-mode">
+    {% csrf_token %}
+    <div class="container">
+        <header>
+            <h1>🔔 Followed Restaurants</h1>
+            <nav>
+                <a href="{% url 'search_restaurants' %}" class="nav-link">🔍 Search</a>
+                <a href="{% url 'favorites_list' %}" class="nav-link">❤️ Favorites</a>
+                <a href="{% url 'followed_restaurants' %}" class="nav-link active">🔔 Following ({{ total_followed }})</a>
+                <a href="{% url 'notifications_list' %}" class="nav-link">📢 Notifications</a>
+            </nav>
+        </header>
+
+        {% if followed_restaurants %}
+            <div class="followed-summary">
+                <h2>You're following {{ total_followed }} restaurant{{ total_followed|pluralize }}</h2>
+                <p>🔔 You'll receive notifications when these restaurants have health updates, grade changes, or new inspections.</p>
+            </div>
+
+            <!-- Recent Notifications Preview -->
+            {% if notifications %}
+                <div class="recent-notifications">
+                    <h3>📢 Recent Updates</h3>
+                    <div class="notification-preview">
+                        {% for notification in notifications|slice:":3" %}
+                            <div class="notification-item {% if not notification.is_read %}unread{% endif %}">
+                                <div class="notification-header">
+                                    <span class="notification-type">{{ notification.get_notification_type_display }}</span>
+                                    <span class="notification-time">{{ notification.created_at|timesince }} ago</span>
+                                </div>
+                                <h4>{{ notification.title }}</h4>
+                                <p>{{ notification.message }}</p>
+                            </div>
+                        {% endfor %}
+                        <a href="{% url 'notifications_list' %}" class="view-all-notifications">View All Notifications →</a>
+                    </div>
+                </div>
+            {% endif %}
+
+            <!-- Followed Restaurants List -->
+            <div class="followed-restaurants-list">
+                <h3>Your Followed Restaurants</h3>
+                {% for item in followed_restaurants %}
+                    <div class="restaurant-card followed-restaurant">
+                        <div class="restaurant-header">
+                            <div class="restaurant-name-address">
+                                <strong><a href="{% url 'restaurant_detail' item.restaurant.CAMIS %}" class="restaurant-link">{{ item.restaurant.DBA }}</a></strong>
+                                <span class="address">{{ item.restaurant.BUILDING }} {{ item.restaurant.STREET }}, {{ item.restaurant.BORO }}{% if item.restaurant.ZIPCODE %} {{ item.restaurant.ZIPCODE|floatformat:0 }}{% endif %}</span>
+                            </div>
+                            <div class="restaurant-rating">
+                                {% if item.rating.stars > 0 %}
+                                    <span class="stars">
+                                        {% for i in "12345" %}
+                                            {% if forloop.counter <= item.rating.stars %}★{% else %}☆{% endif %}
+                                        {% endfor %}
+                                    </span>
+                                    <span class="rating-text">{{ item.rating.stars }}/5 ({{ item.rating.description }})</span>
+                                {% else %}
+                                    <span class="no-rating">No graded inspections</span>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="restaurant-info-row">
+                            <span class="details">
+                                Cuisine: {{ item.restaurant.CUISINE_DESCRIPTION }} |
+                                Latest Grade: {{ item.rating.grade }} |
+                                Following since: {{ item.follow.date_followed|date:"M j, Y" }}
+                            </span>
+                            <div class="restaurant-actions">
+                                <button class="follow-btn following" 
+                                        data-camis="{{ item.restaurant.CAMIS }}" 
+                                        data-name="{{ item.restaurant.DBA }}"
+                                        title="Unfollow restaurant">
+                                    <span class="bell">🔔</span> Following
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Notification Preferences -->
+                        <div class="notification-preferences">
+                            <h4>📬 Notification Settings</h4>
+                            <div class="preference-controls">
+                                <label class="preference-item">
+                                    <input type="checkbox" {% if item.follow.notify_grade_changes %}checked{% endif %} 
+                                           data-camis="{{ item.restaurant.CAMIS }}" data-type="grade_changes">
+                                    📊 Grade Changes
+                                </label>
+                                <label class="preference-item">
+                                    <input type="checkbox" {% if item.follow.notify_new_inspections %}checked{% endif %}
+                                           data-camis="{{ item.restaurant.CAMIS }}" data-type="new_inspections">
+                                    🔍 New Inspections
+                                </label>
+                                <label class="preference-item">
+                                    <input type="checkbox" {% if item.follow.notify_violations %}checked{% endif %}
+                                           data-camis="{{ item.restaurant.CAMIS }}" data-type="violations">
+                                    ⚠️ Violations
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Recent Notifications for this restaurant -->
+                        {% if item.recent_notifications %}
+                            <div class="restaurant-notifications">
+                                <h4>Recent Updates for this Restaurant</h4>
+                                {% for notification in item.recent_notifications %}
+                                    <div class="mini-notification">
+                                        <span class="notification-type">{{ notification.get_notification_type_display }}</span>
+                                        <span class="notification-title">{{ notification.title }}</span>
+                                        <span class="notification-time">{{ notification.created_at|timesince }} ago</span>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+
+        {% else %}
+            <div class="empty-state">
+                <h2>🔔 You're not following any restaurants yet!</h2>
+                <p>Start following restaurants to get notified about:</p>
+                <ul class="benefits-list">
+                    <li>📊 <strong>Grade changes</strong> - Know when a restaurant's health grade improves or declines</li>
+                    <li>🔍 <strong>New inspections</strong> - Stay updated on the latest health inspection results</li>
+                    <li>⚠️ <strong>Violation alerts</strong> - Get notified about new health violations</li>
+                    <li>📈 <strong>Score improvements</strong> - Celebrate when your favorite spots get better scores</li>
+                </ul>
+                <a href="{% url 'search_restaurants' %}" class="cta-button">
+                    🔍 Search Restaurants to Follow
+                </a>
+            </div>
+        {% endif %}
+    </div>
+
+    <script>
+        // Handle follow button clicks
+        document.querySelectorAll('.follow-btn').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                const camis = btn.dataset.camis;
+                const name = btn.dataset.name;
+                
+                try {
+                    const formData = new FormData();
+                    formData.append('camis', camis);
+                    formData.append('restaurant_name', name);
+                    formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+                    
+                    const response = await fetch('{% url "toggle_follow" %}', {
+                        method: 'POST',
+                        body: formData,
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (response.ok) {
+                        // Remove the restaurant card from the page if unfollowed
+                        if (!data.is_followed) {
+                            btn.closest('.restaurant-card').remove();
+                            
+                            // Update the counter
+                            const counter = document.querySelector('.nav-link.active');
+                            const currentCount = parseInt(counter.textContent.match(/\d+/)[0]);
+                            counter.textContent = `🔔 Following (${currentCount - 1})`;
+                            
+                            // Show empty state if no more followed restaurants
+                            if (currentCount - 1 === 0) {
+                                location.reload();
+                            }
+                        }
+                        
+                        // Show success message
+                        showMessage(data.message, 'success');
+                    } else {
+                        showMessage(data.error || 'Failed to update follow status', 'error');
+                    }
+                } catch (error) {
+                    showMessage('Network error. Please try again.', 'error');
+                    console.error('Follow toggle error:', error);
+                }
+            });
+        });
+
+        // Handle notification preference changes
+        document.querySelectorAll('.preference-controls input[type="checkbox"]').forEach(checkbox => {
+            checkbox.addEventListener('change', async (e) => {
+                const camis = checkbox.dataset.camis;
+                const type = checkbox.dataset.type;
+                const enabled = checkbox.checked;
+                
+                try {
+                    const formData = new FormData();
+                    formData.append('camis', camis);
+                    formData.append('notification_type', type);
+                    formData.append('enabled', enabled);
+                    formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+                    
+                    const response = await fetch('/inspections/update_notification_preferences/', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    if (response.ok) {
+                        showMessage(`Notification preference updated!`, 'success');
+                    } else {
+                        checkbox.checked = !enabled; // Revert on error
+                        showMessage('Failed to update preferences', 'error');
+                    }
+                } catch (error) {
+                    checkbox.checked = !enabled; // Revert on error
+                    showMessage('Network error. Please try again.', 'error');
+                }
+            });
+        });
+
+        // Show message function
+        function showMessage(message, type) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}`;
+            messageDiv.textContent = message;
+            messageDiv.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 12px 20px;
+                border-radius: 5px;
+                color: white;
+                font-weight: bold;
+                z-index: 1000;
+                ${type === 'success' ? 'background-color: #4CAF50;' : 'background-color: #f44336;'}
+            `;
+            
+            document.body.appendChild(messageDiv);
+            
+            setTimeout(() => {
+                messageDiv.remove();
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

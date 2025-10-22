@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from inspections.models import RestaurantInspection, RestaurantReview, FavoriteRestaurant
+from inspections.models import RestaurantInspection, RestaurantReview, FavoriteRestaurant, FollowedRestaurant, RestaurantNotification
 from collections import OrderedDict
 from django.db.models import Q
 from datetime import datetime, date
@@ -105,8 +105,9 @@ def search_restaurants(request):
                 grade = 'N/A'
                 description = "No grade available"
             
-            # Check if favorited (quick lookup)
+            # Check if favorited and followed (quick lookup)
             is_favorited = is_restaurant_favorited(request, rest_data['CAMIS'])
+            is_followed = is_restaurant_followed(request, rest_data['CAMIS'])
             
             restaurants.append({
                 'info': type('obj', (object,), {
@@ -127,6 +128,7 @@ def search_restaurants(request):
                 },
                 'reviews': [],  # Skip reviews for performance
                 'is_favorited': is_favorited,
+                'is_followed': is_followed,
                 'citations': []
             })
         
@@ -345,3 +347,219 @@ def is_restaurant_favorited(request, camis):
         session_key=request.session.session_key,
         camis=camis
     ).exists()
+
+
+def is_restaurant_followed(request, camis):
+    """Helper function to check if a restaurant is followed by current user"""
+    if not request.session.session_key:
+        return False
+    
+    return FollowedRestaurant.objects.filter(
+        session_key=request.session.session_key,
+        camis=camis
+    ).exists()
+
+
+@require_POST
+def toggle_follow(request):
+    """Toggle follow status for a restaurant via AJAX"""
+    camis = request.POST.get('camis')
+    restaurant_name = request.POST.get('restaurant_name', '')
+    
+    if not camis:
+        return JsonResponse({'error': 'Invalid restaurant'}, status=400)
+    
+    # Ensure session exists
+    if not request.session.session_key:
+        request.session.create()
+    
+    session_key = request.session.session_key
+    
+    try:
+        # Check if already followed
+        followed = FollowedRestaurant.objects.get(
+            session_key=session_key,
+            camis=camis
+        )
+        # Remove from followed
+        followed.delete()
+        is_followed = False
+        message = f"Unfollowed {restaurant_name}"
+    except FollowedRestaurant.DoesNotExist:
+        # Add to followed restaurants
+        # First get current restaurant state for tracking changes
+        latest_inspection = RestaurantInspection.objects.filter(
+            CAMIS=camis
+        ).order_by('-INSPECTION_DATE').first()
+        
+        FollowedRestaurant.objects.create(
+            session_key=session_key,
+            camis=camis,
+            restaurant_name=restaurant_name,
+            last_known_grade=latest_inspection.GRADE if latest_inspection else None,
+            last_inspection_date=latest_inspection.INSPECTION_DATE if latest_inspection else None
+        )
+        is_followed = True
+        message = f"Now following {restaurant_name} - You'll get notified of health updates!"
+    
+    return JsonResponse({
+        'is_followed': is_followed,
+        'message': message
+    })
+
+
+def followed_restaurants(request):
+    """Display user's followed restaurants with notifications"""
+    # Ensure session exists
+    if not request.session.session_key:
+        request.session.create()
+    
+    session_key = request.session.session_key
+    
+    # Get user's followed restaurants
+    followed = FollowedRestaurant.objects.filter(session_key=session_key)
+    
+    # Get detailed info for each followed restaurant
+    followed_restaurants_list = []
+    for follow in followed:
+        # Get latest inspection info for this restaurant
+        restaurant = RestaurantInspection.objects.filter(CAMIS=follow.camis).first()
+        if restaurant:
+            # Get rating information
+            rating_info = RestaurantInspection.get_restaurant_rating(follow.camis)
+            
+            # Get recent notifications for this restaurant
+            recent_notifications = RestaurantNotification.objects.filter(
+                followed_restaurant=follow
+            )[:3]
+            
+            followed_restaurants_list.append({
+                'follow': follow,
+                'restaurant': restaurant,
+                'rating': rating_info,
+                'recent_notifications': recent_notifications
+            })
+    
+    # Get all unread notifications for the user
+    all_notifications = RestaurantNotification.objects.filter(
+        followed_restaurant__session_key=session_key,
+        is_read=False
+    ).order_by('-created_at')[:10]
+    
+    context = {
+        'followed_restaurants': followed_restaurants_list,
+        'notifications': all_notifications,
+        'total_followed': followed.count()
+    }
+    
+    return render(request, 'inspections/followed_restaurants.html', context)
+
+
+def notifications_list(request):
+    """Display all notifications for followed restaurants"""
+    # Ensure session exists
+    if not request.session.session_key:
+        request.session.create()
+    
+    session_key = request.session.session_key
+    
+    # Get all notifications for this user's followed restaurants
+    notifications = RestaurantNotification.objects.filter(
+        followed_restaurant__session_key=session_key
+    ).order_by('-created_at')
+    
+    # Mark all notifications as read when viewed
+    notifications.filter(is_read=False).update(is_read=True)
+    
+    context = {
+        'notifications': notifications,
+        'total_notifications': notifications.count()
+    }
+    
+    return render(request, 'inspections/notifications.html', context)
+
+
+@require_POST  
+def update_notification_preferences(request):
+    """Update notification preferences for a followed restaurant"""
+    camis = request.POST.get('camis')
+    notification_type = request.POST.get('notification_type')
+    enabled = request.POST.get('enabled') == 'true'
+    
+    if not camis or not notification_type:
+        return JsonResponse({'error': 'Missing parameters'}, status=400)
+    
+    # Ensure session exists
+    if not request.session.session_key:
+        request.session.create()
+    
+    session_key = request.session.session_key
+    
+    try:
+        followed = FollowedRestaurant.objects.get(
+            session_key=session_key,
+            camis=camis
+        )
+        
+        # Update the specific notification preference
+        if notification_type == 'grade_changes':
+            followed.notify_grade_changes = enabled
+        elif notification_type == 'new_inspections':
+            followed.notify_new_inspections = enabled
+        elif notification_type == 'violations':
+            followed.notify_violations = enabled
+        else:
+            return JsonResponse({'error': 'Invalid notification type'}, status=400)
+        
+        followed.save()
+        
+        return JsonResponse({
+            'success': True,
+            'message': f"Notification preference updated for {followed.restaurant_name}"
+        })
+        
+    except FollowedRestaurant.DoesNotExist:
+        return JsonResponse({'error': 'Restaurant not found in your followed list'}, status=404)
+
+
+@require_POST
+def update_notification_preferences(request):
+    """Update notification preferences for a followed restaurant"""
+    camis = request.POST.get('camis')
+    notification_type = request.POST.get('notification_type')
+    enabled = request.POST.get('enabled') == 'true'
+    
+    if not camis or not notification_type:
+        return JsonResponse({'error': 'Invalid parameters'}, status=400)
+    
+    # Ensure session exists
+    if not request.session.session_key:
+        request.session.create()
+    
+    session_key = request.session.session_key
+    
+    try:
+        followed = FollowedRestaurant.objects.get(
+            session_key=session_key,
+            camis=camis
+        )
+        
+        # Update the specific preference
+        if notification_type == 'grade_changes':
+            followed.notify_grade_changes = enabled
+        elif notification_type == 'new_inspections':
+            followed.notify_new_inspections = enabled
+        elif notification_type == 'violations':
+            followed.notify_violations = enabled
+        else:
+            return JsonResponse({'error': 'Invalid notification type'}, status=400)
+        
+        followed.save()
+        
+        return JsonResponse({
+            'success': True,
+            'message': f"Notification preference updated for {followed.restaurant_name}"
+        })
+        
+    except FollowedRestaurant.DoesNotExist:
+        return JsonResponse({'error': 'Restaurant not found in followed list'}, status=404)

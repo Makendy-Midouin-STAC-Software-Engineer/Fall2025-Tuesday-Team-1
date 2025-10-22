@@ -216,4 +216,52 @@ class FavoriteRestaurant(models.Model):
         return f"Favorite: {self.restaurant_name} (Session: {self.session_key[:8]}...)"
 
 
+class FollowedRestaurant(models.Model):
+    """Track restaurants users are following for health and rating updates"""
+    session_key = models.CharField(max_length=40)  # Django session key
+    camis = models.BigIntegerField()  # Restaurant identifier
+    restaurant_name = models.CharField(max_length=255)
+    date_followed = models.DateTimeField(auto_now_add=True)
+    
+    # Notification preferences
+    notify_grade_changes = models.BooleanField(default=True)
+    notify_new_inspections = models.BooleanField(default=True)
+    notify_violations = models.BooleanField(default=True)
+    
+    # Track last known state to detect changes
+    last_known_grade = models.CharField(max_length=5, null=True, blank=True)
+    last_inspection_date = models.DateField(null=True, blank=True)
+    
+    class Meta:
+        unique_together = ('session_key', 'camis')  # Prevent duplicate follows
+        ordering = ['-date_followed']
+    
+    def __str__(self):
+        return f"Following: {self.restaurant_name} (Session: {self.session_key[:8]}...)"
+
+
+class RestaurantNotification(models.Model):
+    """Store notifications for followed restaurant updates"""
+    NOTIFICATION_TYPES = [
+        ('grade_change', 'Grade Change'),
+        ('new_inspection', 'New Inspection'),
+        ('violation_added', 'Violation Added'),
+        ('score_improvement', 'Score Improvement'),
+        ('score_decline', 'Score Decline'),
+    ]
+    
+    followed_restaurant = models.ForeignKey(FollowedRestaurant, on_delete=models.CASCADE)
+    notification_type = models.CharField(max_length=20, choices=NOTIFICATION_TYPES)
+    title = models.CharField(max_length=255)
+    message = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_read = models.BooleanField(default=False)
+    
+    class Meta:
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f"{self.title} - {self.followed_restaurant.restaurant_name}"
+
+
 

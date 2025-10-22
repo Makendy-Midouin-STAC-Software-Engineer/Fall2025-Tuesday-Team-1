@@ -73,6 +73,51 @@
                 }
             });
         });
+
+        // Handle follow button clicks
+        document.querySelectorAll('.follow-btn').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                const camis = btn.dataset.camis;
+                const name = btn.dataset.name;
+                
+                try {
+                    const formData = new FormData();
+                    formData.append('camis', camis);
+                    formData.append('restaurant_name', name);
+                    formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+                    
+                    const response = await fetch('{% url "toggle_follow" %}', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (response.ok) {
+                        // Update button state
+                        const bell = btn.querySelector('.bell');
+                        if (data.is_followed) {
+                            bell.textContent = '🔔';
+                            btn.classList.add('following');
+                            btn.title = 'Unfollow restaurant';
+                        } else {
+                            bell.textContent = '🔕';
+                            btn.classList.remove('following');
+                            btn.title = 'Follow for health updates';
+                        }
+                        
+                        // Show brief message
+                        showMessage(data.message);
+                    }
+                } catch (error) {
+                    console.error('Error toggling follow:', error);
+                    showMessage('Error updating follow status');
+                }
+            });
+        });
         
         // Message display function
         function showMessage(text) {
@@ -103,11 +148,12 @@
         <h1>NYC Restaurant Search</h1>
         
         <!-- Navigation -->
-        <div class="navigation">
-            <a href="{% url 'favorites_list' %}" class="nav-link">
-                ❤️ My Favorites
-            </a>
-        </div>
+        <nav class="navigation">
+            <a href="{% url 'search_restaurants' %}" class="nav-link active">🔍 Search</a>
+            <a href="{% url 'favorites_list' %}" class="nav-link">❤️ Favorites</a>
+            <a href="{% url 'followed_restaurants' %}" class="nav-link">🔔 Following</a>
+            <a href="{% url 'notifications_list' %}" class="nav-link">📢 Notifications</a>
+        </nav>
 
         <!-- Search form -->
         <form method="get" class="search-form">
@@ -198,6 +244,12 @@
                                                 data-name="{{ r.info.DBA }}"
                                                 title="{% if r.is_favorited %}Remove from favorites{% else %}Add to favorites{% endif %}">
                                             <span class="heart">{% if r.is_favorited %}❤️{% else %}🤍{% endif %}</span>
+                                        </button>
+                                        <button class="follow-btn {% if r.is_followed %}following{% endif %}" 
+                                                data-camis="{{ r.info.CAMIS }}" 
+                                                data-name="{{ r.info.DBA }}"
+                                                title="{% if r.is_followed %}Unfollow restaurant{% else %}Follow for health updates{% endif %}">
+                                            <span class="bell">{% if r.is_followed %}🔔{% else %}🔕{% endif %}</span>
                                         </button>
                                         <a href="{% url 'restaurant_detail' r.info.CAMIS %}" class="view-details-btn">View Details →</a>
                                     </div>
