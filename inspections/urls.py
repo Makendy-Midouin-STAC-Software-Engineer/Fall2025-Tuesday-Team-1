@@ -10,6 +10,14 @@ urlpatterns = [
     path("toggle_follow/", views.toggle_follow, name="toggle_follow"),
     path("followed/", views.followed_restaurants, name="followed_restaurants"),
     path("notifications/", views.notifications_list, name="notifications_list"),
-    path("update_notification_preferences/", views.update_notification_preferences, name="update_notification_preferences"),
-    path("update_notification_preferences/", views.update_notification_preferences, name="update_notification_preferences"),
+    path(
+        "update_notification_preferences/",
+        views.update_notification_preferences,
+        name="update_notification_preferences",
+    ),
+    path(
+        "update_notification_preferences/",
+        views.update_notification_preferences,
+        name="update_notification_preferences",
+    ),
 ]

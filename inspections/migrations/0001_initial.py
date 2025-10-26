@@ -4,44 +4,74 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     initial = True
 
-    dependencies = [
-    ]
+    dependencies = []
 
     operations = [
         migrations.CreateModel(
-            name='RestaurantInspection',
+            name="RestaurantInspection",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('CAMIS', models.BigIntegerField()),
-                ('DBA', models.CharField(blank=True, max_length=255, null=True)),
-                ('BORO', models.CharField(blank=True, max_length=50, null=True)),
-                ('BUILDING', models.CharField(blank=True, max_length=50, null=True)),
-                ('STREET', models.CharField(blank=True, max_length=255, null=True)),
-                ('ZIPCODE', models.CharField(blank=True, max_length=20, null=True)),
-                ('PHONE', models.CharField(blank=True, max_length=20, null=True)),
-                ('CUISINE_DESCRIPTION', models.CharField(blank=True, max_length=255, null=True)),
-                ('INSPECTION_DATE', models.DateField(blank=True, null=True)),
-                ('ACTION', models.TextField(blank=True, null=True)),
-                ('VIOLATION_CODE', models.CharField(blank=True, max_length=20, null=True)),
-                ('VIOLATION_DESCRIPTION', models.TextField(blank=True, null=True)),
-                ('CRITICAL_FLAG', models.CharField(blank=True, max_length=50, null=True)),
-                ('SCORE', models.IntegerField(blank=True, null=True)),
-                ('GRADE', models.CharField(blank=True, max_length=5, null=True)),
-                ('GRADE_DATE', models.DateField(blank=True, null=True)),
-                ('RECORD_DATE', models.DateField(blank=True, null=True)),
-                ('INSPECTION_TYPE', models.CharField(blank=True, max_length=255, null=True)),
-                ('Latitude', models.FloatField(blank=True, null=True)),
-                ('Longitude', models.FloatField(blank=True, null=True)),
-                ('Community_Board', models.CharField(blank=True, max_length=50, null=True)),
-                ('Council_District', models.CharField(blank=True, max_length=50, null=True)),
-                ('Census_Tract', models.CharField(blank=True, max_length=50, null=True)),
-                ('BIN', models.CharField(blank=True, max_length=50, null=True)),
-                ('BBL', models.CharField(blank=True, max_length=50, null=True)),
-                ('NTA', models.CharField(blank=True, max_length=50, null=True)),
-                ('Location_Point1', models.CharField(blank=True, max_length=255, null=True)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("CAMIS", models.BigIntegerField()),
+                ("DBA", models.CharField(blank=True, max_length=255, null=True)),
+                ("BORO", models.CharField(blank=True, max_length=50, null=True)),
+                ("BUILDING", models.CharField(blank=True, max_length=50, null=True)),
+                ("STREET", models.CharField(blank=True, max_length=255, null=True)),
+                ("ZIPCODE", models.CharField(blank=True, max_length=20, null=True)),
+                ("PHONE", models.CharField(blank=True, max_length=20, null=True)),
+                (
+                    "CUISINE_DESCRIPTION",
+                    models.CharField(blank=True, max_length=255, null=True),
+                ),
+                ("INSPECTION_DATE", models.DateField(blank=True, null=True)),
+                ("ACTION", models.TextField(blank=True, null=True)),
+                (
+                    "VIOLATION_CODE",
+                    models.CharField(blank=True, max_length=20, null=True),
+                ),
+                ("VIOLATION_DESCRIPTION", models.TextField(blank=True, null=True)),
+                (
+                    "CRITICAL_FLAG",
+                    models.CharField(blank=True, max_length=50, null=True),
+                ),
+                ("SCORE", models.IntegerField(blank=True, null=True)),
+                ("GRADE", models.CharField(blank=True, max_length=5, null=True)),
+                ("GRADE_DATE", models.DateField(blank=True, null=True)),
+                ("RECORD_DATE", models.DateField(blank=True, null=True)),
+                (
+                    "INSPECTION_TYPE",
+                    models.CharField(blank=True, max_length=255, null=True),
+                ),
+                ("Latitude", models.FloatField(blank=True, null=True)),
+                ("Longitude", models.FloatField(blank=True, null=True)),
+                (
+                    "Community_Board",
+                    models.CharField(blank=True, max_length=50, null=True),
+                ),
+                (
+                    "Council_District",
+                    models.CharField(blank=True, max_length=50, null=True),
+                ),
+                (
+                    "Census_Tract",
+                    models.CharField(blank=True, max_length=50, null=True),
+                ),
+                ("BIN", models.CharField(blank=True, max_length=50, null=True)),
+                ("BBL", models.CharField(blank=True, max_length=50, null=True)),
+                ("NTA", models.CharField(blank=True, max_length=50, null=True)),
+                (
+                    "Location_Point1",
+                    models.CharField(blank=True, max_length=255, null=True),
+                ),
             ],
         ),
     ]

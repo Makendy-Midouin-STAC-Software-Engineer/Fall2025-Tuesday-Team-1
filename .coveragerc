@@ -1,0 +1,27 @@
+[run]
+source = .
+omit = 
+    */venv/*
+    */.venv/*
+    */migrations/*
+    */staticfiles/*
+    manage.py
+    */settings.py
+    */wsgi.py
+    */asgi.py
+    */__pycache__/*
+    */tests.py
+    .elasticbeanstalk/*
+
+[report]
+exclude_lines =
+    pragma: no cover
+    def __repr__
+    raise AssertionError
+    raise NotImplementedError
+    if __name__ == .__main__.:
+    class .*\(Protocol\):
+    @(abc\.)?abstractmethod
+
+[html]
+directory = htmlcov
