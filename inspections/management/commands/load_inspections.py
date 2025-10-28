@@ -48,9 +48,11 @@ class Command(BaseCommand):
                         BORO=row.get("BORO"),
                         BUILDING=row.get("BUILDING"),
                         STREET=row.get("STREET"),
-                        ZIPCODE=str(row.get("ZIPCODE"))
-                        if pd.notnull(row.get("ZIPCODE"))
-                        else None,
+                        ZIPCODE=(
+                            str(row.get("ZIPCODE"))
+                            if pd.notnull(row.get("ZIPCODE"))
+                            else None
+                        ),
                         PHONE=row.get("PHONE"),
                         CUISINE_DESCRIPTION=row.get("CUISINE DESCRIPTION"),
                         INSPECTION_DATE=parse_date(row.get("INSPECTION DATE")),
@@ -58,19 +60,23 @@ class Command(BaseCommand):
                         VIOLATION_CODE=row.get("VIOLATION CODE"),
                         VIOLATION_DESCRIPTION=row.get("VIOLATION DESCRIPTION"),
                         CRITICAL_FLAG=row.get("CRITICAL FLAG"),
-                        SCORE=row.get("SCORE")
-                        if pd.notnull(row.get("SCORE"))
-                        else None,
+                        SCORE=(
+                            row.get("SCORE") if pd.notnull(row.get("SCORE")) else None
+                        ),
                         GRADE=row.get("GRADE"),
                         GRADE_DATE=parse_date(row.get("GRADE DATE")),
                         RECORD_DATE=parse_date(row.get("RECORD DATE")),
                         INSPECTION_TYPE=row.get("INSPECTION TYPE"),
-                        Latitude=row.get("Latitude")
-                        if pd.notnull(row.get("Latitude"))
-                        else None,
-                        Longitude=row.get("Longitude")
-                        if pd.notnull(row.get("Longitude"))
-                        else None,
+                        Latitude=(
+                            row.get("Latitude")
+                            if pd.notnull(row.get("Latitude"))
+                            else None
+                        ),
+                        Longitude=(
+                            row.get("Longitude")
+                            if pd.notnull(row.get("Longitude"))
+                            else None
+                        ),
                         Community_Board=row.get("Community Board"),
                         Council_District=row.get("Council District"),
                         Census_Tract=row.get("Census Tract"),

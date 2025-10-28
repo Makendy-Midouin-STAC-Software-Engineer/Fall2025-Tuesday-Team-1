@@ -10,6 +10,7 @@ jobs:
   test:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       max-parallel: 4
       matrix:
         python-version: [3.11]
@@ -25,8 +26,7 @@ jobs:
     - name: Install Dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install -r requirements.txt
-        pip install black flake8 coverage coveralls
+        python -m pip install -r requirements.txt
     
     - name: Check code formatting with Black
       run: |
@@ -58,6 +58,7 @@ jobs:
       uses: coverallsapp/github-action@v2
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
+      continue-on-error: true
 
   deploy:
     needs: test
@@ -66,19 +67,27 @@ jobs:
     
     steps:
     - uses: actions/checkout@v4
-    
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v4
+      with:
+        python-version: 3.11
+    - name: Install Dependencies
+      run: |
+        python -m pip install --upgrade pip
+        python -m pip install -r requirements.txt
+    - name: Collect static files
+      run: |
+        python manage.py collectstatic --noinput
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v4
       with:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: us-east-1
-    
     - name: Deploy to AWS Elastic Beanstalk
       run: |
         # Install EB CLI
-        pip install awsebcli
-        
+        python -m pip install --upgrade awsebcli
         # Check if .elasticbeanstalk config exists, if not initialize
         if [ ! -d ".elasticbeanstalk" ]; then
           echo "⚠️  No EB config found. Deployment skipped."
@@ -87,6 +96,5 @@ jobs:
           echo "- AWS_SECRET_ACCESS_KEY"
           exit 0
         fi
-        
         # Deploy to Elastic Beanstalk
         eb deploy --timeout 20

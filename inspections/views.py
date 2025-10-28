@@ -134,9 +134,11 @@ def search_restaurants(request):
                         "grade": grade,
                         "description": description,
                         "inspection_count": 1,  # Simplified
-                        "latest_inspection": latest_inspection.INSPECTION_DATE
-                        if latest_inspection
-                        else None,
+                        "latest_inspection": (
+                            latest_inspection.INSPECTION_DATE
+                            if latest_inspection
+                            else None
+                        ),
                     },
                     "reviews": [],  # Skip reviews for performance
                     "is_favorited": is_favorited,
@@ -398,9 +400,9 @@ def toggle_follow(request):
             camis=camis,
             restaurant_name=restaurant_name,
             last_known_grade=latest_inspection.GRADE if latest_inspection else None,
-            last_inspection_date=latest_inspection.INSPECTION_DATE
-            if latest_inspection
-            else None,
+            last_inspection_date=(
+                latest_inspection.INSPECTION_DATE if latest_inspection else None
+            ),
         )
         is_followed = True
         message = (

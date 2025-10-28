@@ -65,9 +65,7 @@ class Command(BaseCommand):
                         message = f"Notice: {followed.restaurant_name} dropped from grade {old_grade} to {new_grade}. You may want to check recent inspection details."
                     else:
                         notification_type = "grade_change"
-                        title = (
-                            f"📊 {followed.restaurant_name} grade changed to {new_grade}"
-                        )
+                        title = f"📊 {followed.restaurant_name} grade changed to {new_grade}"
                         message = f"{followed.restaurant_name} received a new grade: {new_grade} (was {old_grade})."
 
                     RestaurantNotification.objects.create(
