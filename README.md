@@ -101,6 +101,33 @@ This project uses GitHub Actions for continuous integration and deployment:
 - **Deployment**: Automatic deployment to AWS Elastic Beanstalk on main branch
 - **Coverage**: Integration with Coveralls for coverage tracking
 
+### For Contributors
+
+The CI/CD pipeline will automatically run when you:
+- Push commits to `main` or `develop` branches
+- Open a Pull Request against `main` or `develop` branches
+
+**Requirements for passing CI:**
+- All code must pass Black formatting (`black --check .`)
+- All code must pass Flake8 linting (`flake8 .`)
+- Django system checks must pass (`python manage.py check`)
+- All tests must pass (`python manage.py test`)
+
+**Local testing before committing:**
+```bash
+# Run the full CI pipeline locally
+black --check .          # Check formatting
+flake8 .                 # Check linting
+python manage.py check   # Django system checks
+python manage.py test    # Run test suite
+```
+
+**AWS Deployment (Optional):**
+Deployment to AWS Elastic Beanstalk only occurs on pushes to `main` branch. 
+To enable deployment, repository maintainers need to set these secrets in GitHub:
+- `AWS_ACCESS_KEY_ID`
+- `AWS_SECRET_ACCESS_KEY`
+
 ## Contributing
 
 1. Fork the repository

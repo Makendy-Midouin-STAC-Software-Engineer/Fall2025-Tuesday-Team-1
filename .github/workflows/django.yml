@@ -39,6 +39,11 @@ jobs:
         # Exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=88 --statistics
     
+    - name: Set up Django environment
+      run: |
+        # Create a basic database for testing
+        python manage.py migrate --run-syncdb
+        
     - name: Run Django System Checks
       run: |
         python manage.py check
@@ -74,5 +79,14 @@ jobs:
         # Install EB CLI
         pip install awsebcli
         
+        # Check if .elasticbeanstalk config exists, if not initialize
+        if [ ! -d ".elasticbeanstalk" ]; then
+          echo "⚠️  No EB config found. Deployment skipped."
+          echo "To enable deployment, set up AWS credentials in repository secrets:"
+          echo "- AWS_ACCESS_KEY_ID"
+          echo "- AWS_SECRET_ACCESS_KEY"
+          exit 0
+        fi
+        
         # Deploy to Elastic Beanstalk
-        eb deploy nyc-restaurants-fresh --timeout 20
+        eb deploy --timeout 20
