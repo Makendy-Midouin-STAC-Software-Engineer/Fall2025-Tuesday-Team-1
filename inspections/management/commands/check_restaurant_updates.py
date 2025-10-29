@@ -57,16 +57,27 @@ class Command(BaseCommand):
 
                     if new_score > old_score:
                         notification_type = "score_improvement"
-                        title = f"🎉 {followed.restaurant_name} improved to grade {new_grade}!"
-                        message = f"Great news! {followed.restaurant_name} upgraded from grade {old_grade} to {new_grade}. Their health standards have improved!"
+                        title = f"🎉 {followed.restaurant_name} grade improved!"
+                        message = (
+                            f"{followed.restaurant_name} improved from grade {old_grade} to {new_grade}. "
+                            f"This means the restaurant's health standards have gotten better. "
+                            f"Previous grade: {old_grade}. New grade: {new_grade}."
+                        )
                     elif new_score < old_score:
                         notification_type = "score_decline"
-                        title = f"⚠️ {followed.restaurant_name} grade declined to {new_grade}"
-                        message = f"Notice: {followed.restaurant_name} dropped from grade {old_grade} to {new_grade}. You may want to check recent inspection details."
+                        title = f"⚠️ {followed.restaurant_name} grade declined."
+                        message = (
+                            f"{followed.restaurant_name} declined from grade {old_grade} to {new_grade}. "
+                            f"This may indicate a drop in health standards. "
+                            f"Previous grade: {old_grade}. New grade: {new_grade}."
+                        )
                     else:
                         notification_type = "grade_change"
-                        title = f"📊 {followed.restaurant_name} grade changed to {new_grade}"
-                        message = f"{followed.restaurant_name} received a new grade: {new_grade} (was {old_grade})."
+                        title = f"📊 {followed.restaurant_name} grade changed."
+                        message = (
+                            f"{followed.restaurant_name} received a new grade: {new_grade} (previously {old_grade}). "
+                            f"Check the inspection details for more information."
+                        )
 
                     RestaurantNotification.objects.create(
                         followed_restaurant=followed,
@@ -86,11 +97,20 @@ class Command(BaseCommand):
                     and latest_inspection.INSPECTION_DATE
                     > (followed.last_inspection_date or datetime.min.date())
                 ):
+                    inspection_date_str = latest_inspection.INSPECTION_DATE.strftime('%B %d, %Y') if latest_inspection.INSPECTION_DATE else 'Unknown date'
+                    grade_str = latest_inspection.GRADE or 'Pending'
+                    violations = latest_inspection.VIOLATION_DESCRIPTION or 'No violations reported.'
+                    message = (
+                        f"A new health inspection was completed on {inspection_date_str}. "
+                        f"Grade received: {grade_str}. "
+                        f"Violations noted: {violations[:120]}... "
+                        f"See the inspection details for the full report."
+                    )
                     RestaurantNotification.objects.create(
                         followed_restaurant=followed,
                         notification_type="new_inspection",
-                        title=f"🔍 New inspection completed at {followed.restaurant_name}",
-                        message=f"A new health inspection was completed on {latest_inspection.INSPECTION_DATE.strftime('%B %d, %Y')}. Grade: {latest_inspection.GRADE or 'Pending'}. Check the details to see the latest results!",
+                        title=f"🔍 New inspection at {followed.restaurant_name}",
+                        message=message,
                     )
                     notifications_created += 1
 
@@ -102,11 +122,54 @@ class Command(BaseCommand):
                 if followed.notify_violations and latest_inspection.VIOLATION_CODE:
                     # Check if this is a critical violation
                     if latest_inspection.CRITICAL_FLAG == "Critical":
+                        violation_code = latest_inspection.VIOLATION_CODE or 'N/A'
+                        violation_desc = latest_inspection.VIOLATION_DESCRIPTION or 'No description.'
+                        message = (
+                            f"A critical health violation was reported: [Code: {violation_code}] "
+                            f"{violation_desc[:120]}... "
+                            f"This violation is considered critical and may impact health safety."
+                        )
                         RestaurantNotification.objects.create(
                             followed_restaurant=followed,
                             notification_type="violation_added",
-                            title=f"⚠️ Critical violation reported at {followed.restaurant_name}",
-                            message=f"A critical health violation was reported during the recent inspection: {latest_inspection.VIOLATION_DESCRIPTION[:100]}... Review the full details for more information.",
+                            title=f"⚠️ Critical violation at {followed.restaurant_name}",
+                            message=message,
+                        )
+                        notifications_created += 1
+
+                    # Check for health outbreak keywords in violation description
+                    outbreak_keywords = [
+                        "outbreak",
+                        "norovirus",
+                        "salmonella",
+                        "hepatitis",
+                        "shigella",
+                        "e. coli",
+                        "listeria",
+                        "foodborne illness",
+                        "contagious disease",
+                        "infectious disease",
+                        "health outbreak",
+                        "disease outbreak",
+                        "illness outbreak",
+                        "public health hazard",
+                        "unsafe food",
+                        "contaminated food",
+                        "epidemic",
+                        "pandemic",
+                    ]
+                    violation_desc = (latest_inspection.VIOLATION_DESCRIPTION or "").lower()
+                    if any(keyword in violation_desc for keyword in outbreak_keywords):
+                        message = (
+                            f"A potential health outbreak or serious foodborne illness was reported: "
+                            f"{latest_inspection.VIOLATION_DESCRIPTION[:120]}... "
+                            f"This may indicate a public health risk. Please review the inspection details for more information."
+                        )
+                        RestaurantNotification.objects.create(
+                            followed_restaurant=followed,
+                            notification_type="health_outbreak",
+                            title=f"🚨 Health outbreak alert at {followed.restaurant_name}",
+                            message=message,
                         )
                         notifications_created += 1
 
