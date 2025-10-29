@@ -1,11 +1,9 @@
 name: Django CI/CD
-
 on:
   push:
     branches: [ main, develop ]
   pull_request:
     branches: [ main, develop ]
-
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -17,6 +15,8 @@ jobs:
     
     steps:
     - uses: actions/checkout@v4
+      with:
+        lfs: true
       
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v4
@@ -59,7 +59,6 @@ jobs:
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
       continue-on-error: true
-
   deploy-staging:
     needs: test
     runs-on: ubuntu-latest
@@ -67,6 +66,8 @@ jobs:
     
     steps:
     - uses: actions/checkout@v4
+      with:
+        lfs: true
     
     - name: Configure AWS Credentials
       uses: aws-actions/configure-aws-credentials@v4
@@ -83,7 +84,6 @@ jobs:
         # Initialize and deploy
         eb init -p python-3.13 NYC_App --region us-east-1
         eb deploy nyc-app-env
-
   deploy-production:
     needs: test
     runs-on: ubuntu-latest
@@ -91,6 +91,8 @@ jobs:
     
     steps:
     - uses: actions/checkout@v4
+      with:
+        lfs: true
     
     - name: Configure AWS Credentials
       uses: aws-actions/configure-aws-credentials@v4
