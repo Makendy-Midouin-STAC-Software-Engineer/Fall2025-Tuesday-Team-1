@@ -50,22 +50,23 @@ def search_restaurants(request):
             "CAMIS", "-INSPECTION_DATE"
         )
 
-
         # Process to get all unique restaurants (no hard limit)
         seen_camis = set()
         limited_restaurants = []
         for inspection in inspections:
             if inspection.CAMIS not in seen_camis:
                 seen_camis.add(inspection.CAMIS)
-                limited_restaurants.append({
-                    "CAMIS": inspection.CAMIS,
-                    "DBA": inspection.DBA,
-                    "BUILDING": inspection.BUILDING,
-                    "STREET": inspection.STREET,
-                    "BORO": inspection.BORO,
-                    "ZIPCODE": inspection.ZIPCODE,
-                    "CUISINE_DESCRIPTION": inspection.CUISINE_DESCRIPTION,
-                })
+                limited_restaurants.append(
+                    {
+                        "CAMIS": inspection.CAMIS,
+                        "DBA": inspection.DBA,
+                        "BUILDING": inspection.BUILDING,
+                        "STREET": inspection.STREET,
+                        "BORO": inspection.BORO,
+                        "ZIPCODE": inspection.ZIPCODE,
+                        "CUISINE_DESCRIPTION": inspection.CUISINE_DESCRIPTION,
+                    }
+                )
 
         # Get latest inspections for all restaurants in one query (much faster)
         camis_list = [rest["CAMIS"] for rest in limited_restaurants]
@@ -434,7 +435,7 @@ def followed_restaurants(request):
             # Get full notification history for dropdown
             notification_history = RestaurantNotification.objects.filter(
                 followed_restaurant=follow
-            ).order_by('-created_at')
+            ).order_by("-created_at")
 
             followed_restaurants_list.append(
                 {
