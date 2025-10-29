@@ -62,7 +62,10 @@ jobs:
   deploy-staging:
     needs: test
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
+    if: |
+      github.ref == 'refs/heads/develop' && 
+      github.event_name == 'push' &&
+      contains(github.event.head_commit.message, '[deploy]')
     
     steps:
     - uses: actions/checkout@v4
@@ -87,7 +90,10 @@ jobs:
   deploy-production:
     needs: test
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    if: |
+      github.ref == 'refs/heads/main' && 
+      github.event_name == 'push' &&
+      contains(github.event.head_commit.message, '[deploy]')
     
     steps:
     - uses: actions/checkout@v4
