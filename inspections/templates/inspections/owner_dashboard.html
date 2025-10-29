@@ -1,0 +1,78 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Owner Dashboard</title>
+    <link rel="stylesheet" href="{% static 'inspections/style.css' %}">
+    <style>
+        .dashboard-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 30px;
+        }
+        .dashboard-table th, .dashboard-table td {
+            border: 1px solid #333;
+            padding: 10px;
+            text-align: left;
+        }
+        .dashboard-table th {
+            background: #222;
+            color: #00e0ff;
+        }
+        .dashboard-table tr:nth-child(even) {
+            background: #18181c;
+        }
+        .dashboard-table tr:hover {
+            background: #23232a;
+        }
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .dashboard-header .btn {
+            background: linear-gradient(145deg, #b0b0ff, #8080dd);
+            color: white;
+            padding: 8px 18px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body class="dark-mode">
+    <div class="container">
+        <div class="dashboard-header">
+            <h1>Owner Dashboard</h1>
+            <span>Welcome, {{ user.username }}!</span>
+        </div>
+        <h2>Your Restaurants and Ratings</h2>
+        {% if restaurant_ratings %}
+        <table class="dashboard-table">
+            <tr>
+                <th>Name</th>
+                <th>Address</th>
+                <th>Latest Grade</th>
+                <th>Stars</th>
+                <th>Description</th>
+                <th>Inspections</th>
+            </tr>
+            {% for item in restaurant_ratings %}
+            <tr>
+                <td>{{ item.restaurant.DBA }}</td>
+                <td>{{ item.restaurant.BUILDING }} {{ item.restaurant.STREET }}, {{ item.restaurant.BORO }}</td>
+                <td>{{ item.rating.grade }}</td>
+                <td>{{ item.rating.stars }}</td>
+                <td>{{ item.rating.description }}</td>
+                <td>{{ item.rating.inspection_count }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+        {% else %}
+        <p>You do not have any restaurants associated with your account yet.</p>
+        {% endif %}
+    </div>
+</body>
+</html>

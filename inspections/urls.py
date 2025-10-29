@@ -20,4 +20,9 @@ urlpatterns = [
         views.update_notification_preferences,
         name="update_notification_preferences",
     ),
+
+    # Owner auth & dashboard
+    path("owner/signup/", views.owner_signup, name="owner_signup"),
+    path("owner/login/", views.owner_login, name="owner_login"),
+    path("owner/dashboard/", views.owner_dashboard, name="owner_dashboard"),
 ]

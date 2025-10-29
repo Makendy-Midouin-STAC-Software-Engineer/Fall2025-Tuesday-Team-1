@@ -12,6 +12,12 @@ from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 
+# Auth imports
+from django.contrib.auth import authenticate, login
+from django.contrib.auth.forms import AuthenticationForm
+from django.contrib.auth.decorators import login_required
+from .forms import OwnerSignUpForm
+
 
 def search_restaurants(request):
     query = request.GET.get("q", "").strip()
@@ -271,6 +277,46 @@ def restaurant_detail(request, camis):
     }
 
     return render(request, "inspections/restaurant_detail.html", context)
+
+
+# === Owner Auth & Dashboard ===
+from django.shortcuts import redirect
+
+def owner_signup(request):
+    if request.method == "POST":
+        form = OwnerSignUpForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            login(request, user)
+            return redirect("owner_dashboard")
+    else:
+        form = OwnerSignUpForm()
+    return render(request, "inspections/owner_signup.html", {"form": form})
+
+def owner_login(request):
+    if request.method == "POST":
+        form = AuthenticationForm(request, data=request.POST)
+        if form.is_valid():
+            user = form.get_user()
+            login(request, user)
+            return redirect("owner_dashboard")
+    else:
+        form = AuthenticationForm()
+    return render(request, "inspections/owner_login.html", {"form": form})
+
+@login_required
+def owner_dashboard(request):
+    # For demo: show all restaurants (in real app, filter by ownership)
+    restaurants = RestaurantInspection.objects.all()[:20]
+    # Show rating for each
+    restaurant_ratings = [
+        {
+            "restaurant": r,
+            "rating": RestaurantInspection.get_restaurant_rating(r.CAMIS)
+        }
+        for r in restaurants
+    ]
+    return render(request, "inspections/owner_dashboard.html", {"restaurant_ratings": restaurant_ratings})
 
 
 @require_POST
