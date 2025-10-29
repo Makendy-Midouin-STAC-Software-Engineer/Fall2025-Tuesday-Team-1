@@ -97,9 +97,16 @@ class Command(BaseCommand):
                     and latest_inspection.INSPECTION_DATE
                     > (followed.last_inspection_date or datetime.min.date())
                 ):
-                    inspection_date_str = latest_inspection.INSPECTION_DATE.strftime('%B %d, %Y') if latest_inspection.INSPECTION_DATE else 'Unknown date'
-                    grade_str = latest_inspection.GRADE or 'Pending'
-                    violations = latest_inspection.VIOLATION_DESCRIPTION or 'No violations reported.'
+                    inspection_date_str = (
+                        latest_inspection.INSPECTION_DATE.strftime("%B %d, %Y")
+                        if latest_inspection.INSPECTION_DATE
+                        else "Unknown date"
+                    )
+                    grade_str = latest_inspection.GRADE or "Pending"
+                    violations = (
+                        latest_inspection.VIOLATION_DESCRIPTION
+                        or "No violations reported."
+                    )
                     message = (
                         f"A new health inspection was completed on {inspection_date_str}. "
                         f"Grade received: {grade_str}. "
@@ -122,8 +129,10 @@ class Command(BaseCommand):
                 if followed.notify_violations and latest_inspection.VIOLATION_CODE:
                     # Check if this is a critical violation
                     if latest_inspection.CRITICAL_FLAG == "Critical":
-                        violation_code = latest_inspection.VIOLATION_CODE or 'N/A'
-                        violation_desc = latest_inspection.VIOLATION_DESCRIPTION or 'No description.'
+                        violation_code = latest_inspection.VIOLATION_CODE or "N/A"
+                        violation_desc = (
+                            latest_inspection.VIOLATION_DESCRIPTION or "No description."
+                        )
                         message = (
                             f"A critical health violation was reported: [Code: {violation_code}] "
                             f"{violation_desc[:120]}... "
@@ -158,7 +167,9 @@ class Command(BaseCommand):
                         "epidemic",
                         "pandemic",
                     ]
-                    violation_desc = (latest_inspection.VIOLATION_DESCRIPTION or "").lower()
+                    violation_desc = (
+                        latest_inspection.VIOLATION_DESCRIPTION or ""
+                    ).lower()
                     if any(keyword in violation_desc for keyword in outbreak_keywords):
                         message = (
                             f"A potential health outbreak or serious foodborne illness was reported: "
