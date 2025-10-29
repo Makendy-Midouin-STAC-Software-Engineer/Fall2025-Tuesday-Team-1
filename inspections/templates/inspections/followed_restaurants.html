@@ -109,18 +109,61 @@
                         </div>
 
                         <!-- Recent Notifications for this restaurant -->
-                        {% if item.recent_notifications %}
-                            <div class="restaurant-notifications">
-                                <h4>Recent Updates for this Restaurant</h4>
-                                {% for notification in item.recent_notifications %}
-                                    <div class="mini-notification">
-                                        <span class="notification-type">{{ notification.get_notification_type_display }}</span>
-                                        <span class="notification-title">{{ notification.title }}</span>
-                                        <span class="notification-time">{{ notification.created_at|timesince }} ago</span>
-                                    </div>
-                                {% endfor %}
-                            </div>
-                        {% endif %}
+                        <div class="restaurant-notifications">
+                            <details class="history-dropdown">
+                                <summary><button class="dropdown-btn small" type="button">📜 View Updates & History</button></summary>
+                                <div class="notification-history-list">
+                                    <h4>Recent Updates for this Restaurant</h4>
+                                    {% if item.recent_notifications %}
+                                        {% for notification in item.recent_notifications %}
+                                            <div class="mini-notification">
+                                                <span class="notification-type">{{ notification.get_notification_type_display }}</span>
+                                                <span class="notification-title">{{ notification.title }}</span>
+                                                <span class="notification-time">{{ notification.created_at|timesince }} ago</span>
+                                            </div>
+                                        {% endfor %}
+                                    {% else %}
+                                        <div class="mini-notification">No recent updates.</div>
+                                    {% endif %}
+                                    <hr style="margin: 8px 0; border: none; border-top: 1px solid #444;">
+                                    <h4>Full History</h4>
+                                    {% for notification in item.notification_history %}
+                                        <div class="history-notification">
+                                            <span class="notification-type">{{ notification.get_notification_type_display }}</span>
+                                            <span class="notification-title">{{ notification.title }}</span>
+                                            <span class="notification-time">{{ notification.created_at|date:'M d, Y H:i' }}</span>
+                                            <div class="notification-message">{{ notification.message }}</div>
+                                        </div>
+                                    {% empty %}
+                                        <div class="history-notification">No history available.</div>
+                                    {% endfor %}
+                                </div>
+                            </details>
+                        </div>
+<style>
+.dropdown-btn {
+    background: #222;
+    color: #fff;
+    border: 1px solid #888;
+    border-radius: 4px;
+    padding: 2px 10px;
+    font-size: 0.95em;
+    cursor: pointer;
+    margin: 4px 0;
+    transition: background 0.2s;
+}
+.dropdown-btn.small {
+    font-size: 0.85em;
+    padding: 2px 8px;
+}
+.dropdown-btn:hover {
+    background: #444;
+}
+.history-dropdown[open] .dropdown-btn {
+    background: #333;
+    color: #ffe082;
+}
+</style>
                     </div>
                 {% endfor %}
             </div>

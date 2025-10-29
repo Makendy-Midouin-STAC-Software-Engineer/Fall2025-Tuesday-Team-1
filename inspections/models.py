@@ -286,6 +286,7 @@ class RestaurantNotification(models.Model):
         ("violation_added", "Violation Added"),
         ("score_improvement", "Score Improvement"),
         ("score_decline", "Score Decline"),
+        ("health_outbreak", "Health Outbreak"),
     ]
 
     followed_restaurant = models.ForeignKey(

@@ -50,28 +50,22 @@ def search_restaurants(request):
             "CAMIS", "-INSPECTION_DATE"
         )
 
-        # Process to get unique restaurants (first 100 for performance)
+
+        # Process to get all unique restaurants (no hard limit)
         seen_camis = set()
         limited_restaurants = []
-
         for inspection in inspections:
             if inspection.CAMIS not in seen_camis:
                 seen_camis.add(inspection.CAMIS)
-                limited_restaurants.append(
-                    {
-                        "CAMIS": inspection.CAMIS,
-                        "DBA": inspection.DBA,
-                        "BUILDING": inspection.BUILDING,
-                        "STREET": inspection.STREET,
-                        "BORO": inspection.BORO,
-                        "ZIPCODE": inspection.ZIPCODE,
-                        "CUISINE_DESCRIPTION": inspection.CUISINE_DESCRIPTION,
-                    }
-                )
-
-                # Limit to 100 restaurants for performance
-                if len(limited_restaurants) >= 100:
-                    break
+                limited_restaurants.append({
+                    "CAMIS": inspection.CAMIS,
+                    "DBA": inspection.DBA,
+                    "BUILDING": inspection.BUILDING,
+                    "STREET": inspection.STREET,
+                    "BORO": inspection.BORO,
+                    "ZIPCODE": inspection.ZIPCODE,
+                    "CUISINE_DESCRIPTION": inspection.CUISINE_DESCRIPTION,
+                })
 
         # Get latest inspections for all restaurants in one query (much faster)
         camis_list = [rest["CAMIS"] for rest in limited_restaurants]
@@ -437,12 +431,18 @@ def followed_restaurants(request):
                 followed_restaurant=follow
             )[:3]
 
+            # Get full notification history for dropdown
+            notification_history = RestaurantNotification.objects.filter(
+                followed_restaurant=follow
+            ).order_by('-created_at')
+
             followed_restaurants_list.append(
                 {
                     "follow": follow,
                     "restaurant": restaurant,
                     "rating": rating_info,
                     "recent_notifications": recent_notifications,
+                    "notification_history": notification_history,
                 }
             )
 
