@@ -2,3 +2,9 @@ Django==5.2.6
 whitenoise==6.11.0
 bcrypt==5.0.0       # only if you use it for password hashing
 gunicorn==21.2.0    # WSGI server
+
+# Development and CI/CD dependencies
+black>=23.0.0       # Code formatting
+flake8>=6.0.0       # Linting
+coverage>=6.2,<7.0  # Code coverage (compatible with coveralls)
+coveralls>=3.3.1    # Coverage reporting

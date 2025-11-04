@@ -9,7 +9,12 @@
     <script>
     document.addEventListener("DOMContentLoaded", () => {
         document.querySelectorAll(".restaurant-header").forEach(header => {
-            header.addEventListener("click", () => {
+            header.addEventListener("click", (e) => {
+                // Don't toggle if clicking on favorite button or links
+                if (e.target.closest('.favorite-btn') || e.target.closest('a')) {
+                    return;
+                }
+                
                 const content = header.nextElementSibling;
                 content.classList.toggle("active");
 
@@ -24,56 +29,187 @@
             });
         });
 
-        // Auto-submit when cuisine changes
-        const cuisineSelect = document.querySelector('select[name="cuisine"]');
-        if (cuisineSelect) {
-            cuisineSelect.addEventListener('change', () => {
-                // Ensure the select is inside a form before submitting
-                if (cuisineSelect.form) cuisineSelect.form.submit();
+        // Handle favorite button clicks
+        document.querySelectorAll('.favorite-btn').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                const camis = btn.dataset.camis;
+                const name = btn.dataset.name;
+                
+                try {
+                    const formData = new FormData();
+                    formData.append('camis', camis);
+                    formData.append('restaurant_name', name);
+                    formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+                    
+                    const response = await fetch('{% url "toggle_favorite" %}', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (response.ok) {
+                        // Update button state
+                        const heart = btn.querySelector('.heart');
+                        if (data.is_favorited) {
+                            heart.textContent = '❤️';
+                            btn.classList.add('favorited');
+                            btn.title = 'Remove from favorites';
+                        } else {
+                            heart.textContent = '🤍';
+                            btn.classList.remove('favorited');
+                            btn.title = 'Add to favorites';
+                        }
+                        
+                        // Show brief message
+                        showMessage(data.message);
+                    }
+                } catch (error) {
+                    console.error('Error toggling favorite:', error);
+                    showMessage('Error updating favorites');
+                }
             });
-        }
-        // Auto-submit when borough changes
-        const boroughSelect = document.querySelector('select[name="borough"]');
-        if (boroughSelect) {
-            boroughSelect.addEventListener('change', () => {
-                // Ensure the select is inside a form before submitting
-                if (boroughSelect.form) boroughSelect.form.submit();
+        });
+
+        // Handle follow button clicks
+        document.querySelectorAll('.follow-btn').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                const camis = btn.dataset.camis;
+                const name = btn.dataset.name;
+                
+                try {
+                    const formData = new FormData();
+                    formData.append('camis', camis);
+                    formData.append('restaurant_name', name);
+                    formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+                    
+                    const response = await fetch('{% url "toggle_follow" %}', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (response.ok) {
+                        // Update button state
+                        const bell = btn.querySelector('.bell');
+                        if (data.is_followed) {
+                            bell.textContent = '🔔';
+                            btn.classList.add('following');
+                            btn.title = 'Unfollow restaurant';
+                        } else {
+                            bell.textContent = '🔕';
+                            btn.classList.remove('following');
+                            btn.title = 'Follow for health updates';
+                        }
+                        
+                        // Show brief message
+                        showMessage(data.message);
+                    }
+                } catch (error) {
+                    console.error('Error toggling follow:', error);
+                    showMessage('Error updating follow status');
+                }
             });
+        });
+        
+        // Message display function
+        function showMessage(text) {
+            const msg = document.createElement('div');
+            msg.textContent = text;
+            msg.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: #00e0ff;
+                color: #000;
+                padding: 10px 15px;
+                border-radius: 5px;
+                z-index: 1000;
+                animation: slideIn 0.3s ease;
+            `;
+            document.body.appendChild(msg);
+            setTimeout(() => msg.remove(), 3000);
         }
+
+        // Manual form submission only - no auto-submit
+        // Users must click the Search button to trigger search
     });
     </script>
 </head>
 <body class="dark-mode">
     <div class="container">
         <h1>NYC Restaurant Search</h1>
+        
+        <!-- Navigation -->
+        <nav class="navigation">
+            <a href="{% url 'search_restaurants' %}" class="nav-link active">🔍 Search</a>
+            <a href="{% url 'favorites_list' %}" class="nav-link">❤️ Favorites</a>
+            <a href="{% url 'followed_restaurants' %}" class="nav-link">🔔 Following</a>
+            <a href="{% url 'notifications_list' %}" class="nav-link">📢 Notifications</a>
+            <span style="margin-left: 30px;"></span>
+            <a href="{% url 'owner_login' %}" class="nav-link">Owner Login</a>
+            <a href="{% url 'owner_signup' %}" class="nav-link">Owner Sign Up</a>
+        </nav>
 
         <!-- Search form -->
         <form method="get" class="search-form">
             <input type="text" name="q" placeholder="Restaurant name..." value="{{ query }}">
-            <input type="text" name="z" placeholder="Zipcode" value="{{ zipcode }}">
+            <input type="text" name="zipcode" placeholder="Zipcode" value="{{ zipcode }}">
             <select name="cuisine">
                 <option value="">All Cuisines</option>
-                {% for c in cuisines %}
-                    <option value="{{ c }}" {% if c == selected_cuisine %}selected{% endif %}>
+                {% for c in all_cuisines %}
+                    <option value="{{ c }}" {% if c == cuisine %}selected{% endif %}>
                         {{ c }}
                     </option>
                 {% endfor %}
             </select>
             <select name="borough">
                 <option value="">All Boroughs</option>
-                {% for borough in boroughs %}
-                    <option value="{{ borough }}" {% if borough == selected_borough %}selected{% endif %}>
-                        {{ borough }}
+                {% for b in all_boroughs %}
+                    <option value="{{ b }}" {% if b == borough %}selected{% endif %}>
+                        {{ b }}
                     </option>
                 {% endfor %}
             </select>
-            <button type="submit">Search</button>
+            <select name="sort_by">
+                <option value="name" {% if sort_by == 'name' %}selected{% endif %}>Sort by Name</option>
+                <option value="rating_high" {% if sort_by == 'rating_high' %}selected{% endif %}>Highest Rating</option>
+                <option value="rating_low" {% if sort_by == 'rating_low' %}selected{% endif %}>Lowest Rating</option>
+                <option value="grade" {% if sort_by == 'grade' %}selected{% endif %}>Best Grade (A-C)</option>
+                <option value="latest_inspection" {% if sort_by == 'latest_inspection' %}selected{% endif %}>Latest Inspection</option>
+            </select>
+            <button type="submit" class="search-button">🔍 Search Restaurants</button>
         </form>
+        
+        
+        <div id="loading-indicator" style="display: none; text-align: center; padding: 20px; font-size: 18px; color: #007bff;">
+            🔄 Searching restaurants... This should be much faster now!
+        </div>
 
         <!-- Conditional Results -->
-        {% comment %} Show results when any filter/search input is present {% endcomment %}
-        {% if query or selected_cuisine or selected_borough or zipcode %}
-            <h2>Results ({{ restaurants|length }})</h2>
+        {% if query or cuisine or zipcode or borough %}
+            {% if paginator %}
+                <h2>Results ({{ total_results }} restaurants found)</h2>
+                <div class="pagination-info">
+                    <p>Showing page {{ page_obj.number }} of {{ paginator.num_pages }} 
+                       ({{ page_obj.start_index }} - {{ page_obj.end_index }} of {{ total_results }})</p>
+                </div>
+            {% else %}
+                <h2>Results ({{ restaurants|length }})</h2>
+            {% endif %}
+            
+            {% if results_limited %}
+                <div class="results-notice">
+                    <p>⚡ Showing first 200 restaurants for performance. Try more specific search terms to narrow results.</p>
+                </div>
+            {% endif %}
 
             {% if restaurants %}
                 <ul class="restaurant-list">
@@ -81,42 +217,164 @@
                         <li class="restaurant-item">
                             <div class="restaurant-header">
                                 <div class="restaurant-name-address">
-                                    <strong>{{ r.info.DBA }}</strong>
+                                    <strong><a href="{% url 'restaurant_detail' r.info.CAMIS %}" style="color: #00e0ff; text-decoration: none;">{{ r.info.DBA }}</a></strong>
                                     <span class="address">{{ r.info.BUILDING }} {{ r.info.STREET }}, {{ r.info.BORO }}{% if r.info.ZIPCODE %} {{ r.info.ZIPCODE|floatformat:0 }}{% endif %}</span>
                                 </div>
-                                <span class="details">
-                                    Cuisine: {{ r.info.CUISINE_DESCRIPTION }} |
-                                    Grade: {{ r.info.GRADE }} |
-                                    Score: {{ r.info.SCORE }}
-                                </span>
+                                <div class="restaurant-rating">
+                                    {% if r.rating.stars > 0 %}
+                                        <span class="stars">
+                                            {% for i in "12345" %}
+                                                {% if forloop.counter <= r.rating.stars %}★{% else %}☆{% endif %}
+                                            {% endfor %}
+                                        </span>
+                                        <span class="rating-text">{{ r.rating.stars }}/5 ({{ r.rating.description }})</span>
+                                    {% else %}
+                                        <span class="no-rating">No graded inspections</span>
+                                    {% endif %}
+                                </div>
+                                <div class="restaurant-info-row">
+                                    <span class="details">
+                                        Cuisine: {{ r.info.CUISINE_DESCRIPTION }} |
+                                        Latest Grade: {{ r.rating.grade }} |
+                                        Inspections: {{ r.rating.inspection_count }}
+                                    </span>
+                                    <div class="restaurant-actions">
+                                        <button class="favorite-btn {% if r.is_favorited %}favorited{% endif %}" 
+                                                data-camis="{{ r.info.CAMIS }}" 
+                                                data-name="{{ r.info.DBA }}"
+                                                title="{% if r.is_favorited %}Remove from favorites{% else %}Add to favorites{% endif %}">
+                                            <span class="heart">{% if r.is_favorited %}❤️{% else %}🤍{% endif %}</span>
+                                        </button>
+                                        <button class="follow-btn {% if r.is_followed %}following{% endif %}" 
+                                                data-camis="{{ r.info.CAMIS }}" 
+                                                data-name="{{ r.info.DBA }}"
+                                                title="{% if r.is_followed %}Unfollow restaurant{% else %}Follow for health updates{% endif %}">
+                                            <span class="bell">{% if r.is_followed %}🔔{% else %}🔕{% endif %}</span>
+                                        </button>
+                                        <a href="{% url 'restaurant_detail' r.info.CAMIS %}" class="view-details-btn">View Details →</a>
+                                    </div>
+                                </div>
                             </div>
 
                             <div class="restaurant-content">
-                                {% for insp in r.citations %}
-                                    <div class="inspection-entry">
-                                        <p><b>Date:</b> {{ insp.INSPECTION_DATE }}</p>
-                                        <p><b>Action:</b> {{ insp.ACTION }}</p>
-                                        <p><b>Violation:</b> {{ insp.VIOLATION_DESCRIPTION }}</p>
-                                        <p><b>Critical:</b> {{ insp.CRITICAL_FLAG }}</p>
-                                        <hr>
+                                <!-- Reviews Section -->
+                                {% if r.reviews %}
+                                    <div class="reviews-section">
+                                        <h4>Recent Reviews:</h4>
+                                        {% for review in r.reviews %}
+                                            <div class="review-item">
+                                                <div class="review-header">
+                                                    <span class="reviewer">{{ review.reviewer_name }}</span>
+                                                    <span class="review-rating">{{ review.stars_display }}</span>
+                                                    <span class="review-date">{{ review.review_date|date:"M d, Y" }}</span>
+                                                </div>
+                                                <p class="review-text">{{ review.review_text }}</p>
+                                            </div>
+                                        {% endfor %}
                                     </div>
-                                {% endfor %}
+                                {% endif %}
+
+                                <!-- Add Review Form -->
+                                <div class="add-review-section">
+                                    <h4>Add Your Review:</h4>
+                                    <form method="post" action="{% url 'add_review' %}" class="review-form">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="camis" value="{{ r.info.CAMIS }}">
+                                        <input type="hidden" name="restaurant_name" value="{{ r.info.DBA }}">
+                                        
+                                        <div class="form-row">
+                                            <input type="text" name="reviewer_name" placeholder="Your name (optional)" class="reviewer-input">
+                                            <select name="rating" required class="rating-select">
+                                                <option value="">Rate this restaurant</option>
+                                                <option value="5">★★★★★ Excellent</option>
+                                                <option value="4">★★★★☆ Good</option>
+                                                <option value="3">★★★☆☆ Average</option>
+                                                <option value="2">★★☆☆☆ Poor</option>
+                                                <option value="1">★☆☆☆☆ Terrible</option>
+                                            </select>
+                                        </div>
+                                        
+                                        <textarea name="review_text" placeholder="Share your experience..." required class="review-textarea"></textarea>
+                                        <button type="submit" class="submit-review-btn">Submit Review</button>
+                                    </form>
+                                </div>
+
+                                <!-- Inspection History -->
+                                <div class="inspection-history">
+                                    <h4>Recent Inspections:</h4>
+                                    {% for insp in r.citations|slice:":5" %}
+                                        <div class="inspection-entry">
+                                            <div class="inspection-header">
+                                                <span class="inspection-date">{{ insp.INSPECTION_DATE }}</span>
+                                                <span class="inspection-grade grade-{{ insp.GRADE }}">Grade: {{ insp.GRADE }}</span>
+                                                {% if insp.SCORE %}<span class="inspection-score">Score: {{ insp.SCORE }}</span>{% endif %}
+                                            </div>
+                                            {% if insp.VIOLATION_DESCRIPTION %}
+                                                <p class="violation"><b>Violation:</b> {{ insp.VIOLATION_DESCRIPTION }}</p>
+                                            {% endif %}
+                                            {% if insp.ACTION %}
+                                                <p class="action"><b>Action:</b> {{ insp.ACTION }}</p>
+                                            {% endif %}
+                                        </div>
+                                    {% endfor %}
+                                </div>
                             </div>
                         </li>
                     {% endfor %}
                 </ul>
+                
+                <!-- Pagination Controls -->
+                {% if paginator and paginator.num_pages > 1 %}
+                    <div class="pagination">
+                        <div class="pagination-controls">
+                            {% if page_obj.has_previous %}
+                                <a href="?{% if query %}q={{ query }}&{% endif %}{% if cuisine %}cuisine={{ cuisine }}&{% endif %}{% if zipcode %}zipcode={{ zipcode }}&{% endif %}{% if borough %}borough={{ borough }}&{% endif %}{% if sort_by %}sort_by={{ sort_by }}&{% endif %}page=1" class="page-link">« First</a>
+                                <a href="?{% if query %}q={{ query }}&{% endif %}{% if cuisine %}cuisine={{ cuisine }}&{% endif %}{% if zipcode %}zipcode={{ zipcode }}&{% endif %}{% if borough %}borough={{ borough }}&{% endif %}{% if sort_by %}sort_by={{ sort_by }}&{% endif %}page={{ page_obj.previous_page_number }}" class="page-link">‹ Previous</a>
+                            {% endif %}
+                            
+                            <span class="page-info">
+                                Page {{ page_obj.number }} of {{ paginator.num_pages }}
+                            </span>
+                            
+                            {% if page_obj.has_next %}
+                                <a href="?{% if query %}q={{ query }}&{% endif %}{% if cuisine %}cuisine={{ cuisine }}&{% endif %}{% if zipcode %}zipcode={{ zipcode }}&{% endif %}{% if borough %}borough={{ borough }}&{% endif %}{% if sort_by %}sort_by={{ sort_by }}&{% endif %}page={{ page_obj.next_page_number }}" class="page-link">Next ›</a>
+                                <a href="?{% if query %}q={{ query }}&{% endif %}{% if cuisine %}cuisine={{ cuisine }}&{% endif %}{% if zipcode %}zipcode={{ zipcode }}&{% endif %}{% if borough %}borough={{ borough }}&{% endif %}{% if sort_by %}sort_by={{ sort_by }}&{% endif %}page={{ paginator.num_pages }}" class="page-link">Last »</a>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endif %}
+                
             {% else %}
                 <p>
                     No results found
                     {% if query %} for "{{ query }}"{% endif %}
-                    {% if selected_cuisine %}{% if query %}, {% else %} for {% endif %}cuisine "{{ selected_cuisine }}"{% endif %}
-                    {% if selected_borough %}{% if query or selected_cuisine %}, {% else %} for {% endif %}borough "{{ selected_borough }}"{% endif %}
-                    {% if zipcode %}{% if query or selected_cuisine or selected_borough %}, {% else %} for {% endif %}zipcode "{{ zipcode }}"{% endif %}.
+                    {% if cuisine %}{% if query %}, {% else %} for {% endif %}cuisine "{{ cuisine }}"{% endif %}
+                    {% if zipcode %}{% if query or cuisine %}, {% else %} for {% endif %}zipcode "{{ zipcode }}"{% endif %}
+                    {% if borough %}{% if query or cuisine or zipcode %}, {% else %} for {% endif %}borough "{{ borough }}"{% endif %}.
                 </p>
             {% endif %}
         {% else %}
-            <h2>Ready to explore? Search by restaurant name, cuisine, borough, or zipcode.</h2>
+            <h2>Ready to explore? Search by restaurant name, cuisine, zipcode, or borough.</h2>
         {% endif %}
     </div>
+
+    <script>
+    // Show loading indicator on search form submission
+    document.querySelector('form[method="get"]').addEventListener('submit', function() {
+        document.getElementById('loading-indicator').style.display = 'block';
+        
+        // Hide results section while loading
+        const resultsSection = document.querySelector('h2');
+        if (resultsSection) {
+            resultsSection.style.opacity = '0.3';
+        }
+        
+        // Add loading message to button
+        const searchBtn = document.querySelector('.search-button');
+        searchBtn.innerHTML = '⏳ Searching...';
+        searchBtn.disabled = true;
+    });
+    </script>
+
 </body>
 </html>

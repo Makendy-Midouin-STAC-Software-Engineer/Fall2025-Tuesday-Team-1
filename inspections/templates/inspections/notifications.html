@@ -1,0 +1,238 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notifications - NYC Restaurant Inspections</title>
+    <link rel="stylesheet" href="{% static 'inspections/style.css' %}">
+</head>
+<body class="dark-mode">
+    {% csrf_token %}
+    <div class="container">
+        <header>
+            <h1>📢 Notifications</h1>
+            <nav>
+                <a href="{% url 'search_restaurants' %}" class="nav-link">🔍 Search</a>
+                <a href="{% url 'favorites_list' %}" class="nav-link">❤️ Favorites</a>
+                <a href="{% url 'followed_restaurants' %}" class="nav-link">🔔 Following</a>
+                <a href="{% url 'notifications_list' %}" class="nav-link active">📢 Notifications</a>
+            </nav>
+        </header>
+
+        {% if notifications %}
+            <div class="notifications-summary">
+                <h2>📬 All Notifications ({{ total_notifications }})</h2>
+                <p>Updates from your followed restaurants - all notifications are marked as read when you view this page.</p>
+            </div>
+
+            <div class="notifications-list">
+                {% for notification in notifications %}
+                    <div class="notification-card {% if not notification.is_read %}unread{% endif %}">
+                        <div class="notification-header">
+                            <div class="notification-meta">
+                                <span class="notification-type type-{{ notification.notification_type }}">
+                                    {% if notification.notification_type == 'grade_change' %}📊 Grade Change
+                                    {% elif notification.notification_type == 'new_inspection' %}🔍 New Inspection
+                                    {% elif notification.notification_type == 'violation_added' %}⚠️ Violation Added
+                                    {% elif notification.notification_type == 'score_improvement' %}📈 Score Improvement
+                                    {% elif notification.notification_type == 'score_decline' %}📉 Score Decline
+                                    {% else %}📢 Update
+                                    {% endif %}
+                                </span>
+                                <span class="notification-time">{{ notification.created_at|date:"M j, Y g:i A" }}</span>
+                                <span class="restaurant-name">{{ notification.followed_restaurant.restaurant_name }}</span>
+                            </div>
+                        </div>
+
+                        <div class="notification-content">
+                            <h3 class="notification-title">{{ notification.title }}</h3>
+                            <p class="notification-message">{{ notification.message }}</p>
+                            
+                            <div class="notification-actions">
+                                <a href="{% url 'restaurant_detail' notification.followed_restaurant.camis %}" class="view-restaurant-btn">
+                                    🏪 View Restaurant Details
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+
+            <!-- Pagination would go here if needed -->
+            {% if notifications|length > 20 %}
+                <div class="pagination-info">
+                    <p>Showing recent notifications. Older notifications are automatically archived after 90 days.</p>
+                </div>
+            {% endif %}
+
+        {% else %}
+            <div class="empty-state">
+                <h2>📢 No notifications yet!</h2>
+                <p>You'll see notifications here when:</p>
+                <ul class="benefits-list">
+                    <li>📊 A followed restaurant gets a new health grade</li>
+                    <li>🔍 A new inspection is completed</li>
+                    <li>⚠️ New violations are reported</li>
+                    <li>📈 Health scores improve or decline</li>
+                </ul>
+                
+                <div class="cta-section">
+                    <a href="{% url 'followed_restaurants' %}" class="cta-button">
+                        🔔 Manage Followed Restaurants
+                    </a>
+                    <a href="{% url 'search_restaurants' %}" class="cta-button secondary">
+                        🔍 Find Restaurants to Follow
+                    </a>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+
+    <style>
+        .notifications-list {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .notification-card {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: box-shadow 0.3s ease;
+        }
+
+        .notification-card:hover {
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+
+        .notification-card.unread {
+            border-left: 4px solid #007bff;
+            background: #f8f9ff;
+        }
+
+        .notification-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .notification-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .notification-type {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .notification-type.type-grade_change {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .notification-type.type-new_inspection {
+            background: #f3e5f5;
+            color: #7b1fa2;
+        }
+
+        .notification-type.type-violation_added {
+            background: #ffebee;
+            color: #c62828;
+        }
+
+        .notification-type.type-score_improvement {
+            background: #e8f5e8;
+            color: #2e7d32;
+        }
+
+        .notification-type.type-score_decline {
+            background: #fff3e0;
+            color: #ef6c00;
+        }
+
+        .notification-time {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .restaurant-name {
+            font-weight: bold;
+            color: #333;
+        }
+
+        .notification-title {
+            margin: 0 0 8px 0;
+            color: #333;
+            font-size: 18px;
+        }
+
+        .notification-message {
+            margin: 0 0 16px 0;
+            color: #666;
+            line-height: 1.5;
+        }
+
+        .notification-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .view-restaurant-btn {
+            padding: 8px 16px;
+            background: #007bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            font-size: 14px;
+            transition: background-color 0.3s ease;
+        }
+
+        .view-restaurant-btn:hover {
+            background: #0056b3;
+            color: white;
+            text-decoration: none;
+        }
+
+        .cta-section {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 24px;
+        }
+
+        .cta-button.secondary {
+            background: #6c757d;
+            border-color: #6c757d;
+        }
+
+        .cta-button.secondary:hover {
+            background: #545b62;
+            border-color: #545b62;
+        }
+
+        @media (max-width: 768px) {
+            .notification-meta {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
+
+            .cta-section {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
+</body>
+</html>

@@ -1,0 +1,23 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Review Submitted - NYC Restaurant Search</title>
+    <link rel="stylesheet" href="{% static 'inspections/style.css' %}">
+</head>
+<body class="dark-mode">
+    <div class="container">
+        <h1>Review Submitted Successfully!</h1>
+        
+        <div class="success-message">
+            <p>Thank you for reviewing <strong>{{ restaurant_name }}</strong>!</p>
+            <p>Your review has been added and will help other diners make informed decisions.</p>
+        </div>
+        
+        <div class="navigation">
+            <a href="{% url 'search_restaurants' %}" class="btn">Back to Search</a>
+        </div>
+    </div>
+</body>
+</html>

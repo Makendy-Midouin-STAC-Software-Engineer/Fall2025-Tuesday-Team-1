@@ -3,11 +3,14 @@ __pycache__/
 *.pyc
 *.pyo
 *.pyd
+*.sqlite3
 
 # Django
 *.log
 *.pot
-*.sqlite3
+*.pyc
+*.pyo
+*.pyd
 media/
 staticfiles/
 
@@ -22,3 +25,4 @@ venv/
 .elasticbeanstalk/*
 !.elasticbeanstalk/*.cfg.yml
 !.elasticbeanstalk/*.global.yml
+

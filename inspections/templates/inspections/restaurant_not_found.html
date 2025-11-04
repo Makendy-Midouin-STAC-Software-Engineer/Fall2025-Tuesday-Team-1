@@ -1,0 +1,23 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Restaurant Not Found - NYC Restaurant Search</title>
+    <link rel="stylesheet" href="{% static 'inspections/style.css' %}">
+</head>
+<body class="dark-mode">
+    <div class="container">
+        <h1>Restaurant Not Found</h1>
+        
+        <div class="success-message">
+            <p>Sorry, we couldn't find a restaurant with that ID in our database.</p>
+            <p>This restaurant may not be in our NYC inspection records.</p>
+        </div>
+        
+        <div class="navigation">
+            <a href="{% url 'search_restaurants' %}" class="btn">Back to Search</a>
+        </div>
+    </div>
+</body>
+</html>

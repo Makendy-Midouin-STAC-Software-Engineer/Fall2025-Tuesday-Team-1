@@ -38,9 +38,25 @@ h2 {
     justify-content: center;
     align-items: center;
     gap: 10px;
-    flex-wrap: nowrap; /* keep on one line */
-    gap: 10px;
+    flex-wrap: wrap; /* Allow wrapping on smaller screens */
     margin-bottom: 20px;
+}
+
+/* Results notice */
+.results-notice {
+    background-color: #1a1a1e;
+    border: 1px solid #ffaa00;
+    border-radius: 8px;
+    padding: 12px 20px;
+    margin: 15px 0;
+    text-align: center;
+}
+
+.results-notice p {
+    color: #ffaa00;
+    margin: 0;
+    font-size: 0.95em;
+    font-weight: bold;
 }
 
 .search-form input[type="text"],
@@ -48,6 +64,7 @@ h2 {
     padding: 10px 14px;
     border-radius: 8px;
     border: 1px solid #333;
+    min-width: 120px;
     background-color: #0e0e11;
     color: #fff;
     font-size: 16px;
@@ -114,6 +131,42 @@ select option {
 .search-form button:hover {
     transform: scale(1.05);
     box-shadow: 0 0 12px #00ffa2;
+}
+
+/* Enhanced search button */
+.search-button {
+    padding: 14px 28px !important;
+    font-size: 1.1em !important;
+    border-radius: 8px !important;
+    background: linear-gradient(135deg, #00e0ff 0%, #00ffa2 100%) !important;
+    box-shadow: 0 0 15px rgba(0, 255, 162, 0.3) !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3) !important;
+}
+
+.search-button:hover {
+    transform: translateY(-2px) scale(1.05) !important;
+    box-shadow: 0 0 25px rgba(0, 255, 162, 0.5) !important;
+}
+
+/* Search help text */
+.search-help {
+    text-align: center;
+    margin: 15px 0 25px 0;
+    padding: 12px 20px;
+    background: linear-gradient(135deg, #1a1a1e 0%, #2a2a2e 100%);
+    border-radius: 8px;
+    border: 1px solid rgba(0, 255, 162, 0.2);
+}
+
+.search-help p {
+    margin: 0;
+    color: #b0b0ff;
+    font-size: 0.95em;
+}
+
+.search-help strong {
+    color: #00ffa2;
+    text-shadow: 0 0 5px rgba(0, 255, 162, 0.3);
 }
 
 /* === Restaurant list === */
@@ -195,4 +248,747 @@ select option {
 }
 .inspection-entry p {
     margin: 4px 0;
+}
+
+/* === RATINGS AND REVIEWS STYLES === */
+
+/* Restaurant rating display */
+.restaurant-rating {
+    margin: 8px 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.stars {
+    color: #ffd700;
+    font-size: 1.2em;
+    text-shadow: 0 0 5px rgba(255, 215, 0, 0.5);
+}
+
+.rating-text {
+    color: #b0b0ff;
+    font-size: 0.9em;
+}
+
+.no-rating {
+    color: #888;
+    font-style: italic;
+}
+
+/* Grade styling */
+.grade-A {
+    color: #4CAF50;
+    font-weight: bold;
+}
+
+.grade-B {
+    color: #FF9800;
+    font-weight: bold;
+}
+
+.grade-C {
+    color: #f44336;
+    font-weight: bold;
+}
+
+/* Reviews section */
+.reviews-section {
+    background-color: #1a1a1e;
+    padding: 15px;
+    margin: 15px 0;
+    border-radius: 8px;
+    border-left: 3px solid #00e0ff;
+}
+
+.reviews-section h4 {
+    color: #00e0ff;
+    margin-top: 0;
+}
+
+.review-item {
+    background-color: #252529;
+    padding: 12px;
+    margin: 10px 0;
+    border-radius: 6px;
+    border-left: 2px solid #444;
+}
+
+.review-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.reviewer {
+    font-weight: bold;
+    color: #b0b0ff;
+}
+
+.review-rating {
+    color: #ffd700;
+}
+
+.review-date {
+    color: #888;
+    font-size: 0.85em;
+}
+
+.review-text {
+    color: #e4e4eb;
+    line-height: 1.4;
+    margin: 0;
+}
+
+/* Add review form */
+.add-review-section {
+    background-color: #1a1a1e;
+    padding: 15px;
+    margin: 15px 0;
+    border-radius: 8px;
+    border-left: 3px solid #4CAF50;
+}
+
+.add-review-section h4 {
+    color: #4CAF50;
+    margin-top: 0;
+}
+
+.review-form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.form-row {
+    display: flex;
+    gap: 10px;
+}
+
+.reviewer-input,
+.rating-select {
+    flex: 1;
+    padding: 8px 12px;
+    background-color: #202024;
+    color: #e4e4eb;
+    border: 1px solid #333;
+    border-radius: 6px;
+}
+
+.review-textarea {
+    padding: 12px;
+    background-color: #202024;
+    color: #e4e4eb;
+    border: 1px solid #333;
+    border-radius: 6px;
+    min-height: 80px;
+    resize: vertical;
+}
+
+.submit-review-btn {
+    padding: 10px 20px;
+    background: linear-gradient(145deg, #4CAF50, #45a049);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.3s ease;
+}
+
+.submit-review-btn:hover {
+    background: linear-gradient(145deg, #45a049, #3d8b40);
+    box-shadow: 0 0 10px rgba(76, 175, 80, 0.3);
+}
+
+/* Inspection history section */
+.inspection-history {
+    background-color: #1a1a1e;
+    padding: 15px;
+    margin: 15px 0;
+    border-radius: 8px;
+    border-left: 3px solid #b0b0ff;
+}
+
+.inspection-history h4 {
+    color: #b0b0ff;
+    margin-top: 0;
+}
+
+.inspection-header {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.inspection-date {
+    color: #00e0ff;
+    font-weight: bold;
+}
+
+.inspection-score {
+    color: #ffd700;
+}
+
+.violation,
+.action {
+    margin: 5px 0;
+    font-size: 0.9em;
+    line-height: 1.3;
+}
+
+/* Success page styling */
+.success-message {
+    background-color: #1a4f1a;
+    padding: 20px;
+    border-radius: 8px;
+    border-left: 4px solid #4CAF50;
+    margin: 20px 0;
+    text-align: center;
+}
+
+.navigation {
+    text-align: center;
+    margin-top: 20px;
+}
+
+.btn {
+    display: inline-block;
+    padding: 12px 24px;
+    background: linear-gradient(145deg, #00e0ff, #0099cc);
+    color: white;
+    text-decoration: none;
+    border-radius: 8px;
+    font-weight: bold;
+    transition: all 0.3s ease;
+}
+
+.btn:hover {
+    background: linear-gradient(145deg, #0099cc, #0066aa);
+    box-shadow: 0 0 15px rgba(0, 224, 255, 0.4);
+}
+
+/* Restaurant info row with view details button */
+.restaurant-info-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+}
+
+.view-details-btn {
+    background: linear-gradient(145deg, #b0b0ff, #8080dd);
+    color: white;
+    padding: 6px 12px;
+    border-radius: 6px;
+    text-decoration: none;
+    font-size: 0.9em;
+    font-weight: bold;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+}
+
+.view-details-btn:hover {
+    background: linear-gradient(145deg, #8080dd, #6060bb);
+    box-shadow: 0 0 10px rgba(176, 176, 255, 0.3);
+}
+
+/* === FAVORITES FUNCTIONALITY === */
+
+/* Navigation styling */
+.navigation {
+    text-align: center;
+    margin: 20px 0;
+    padding: 15px;
+    background-color: #1a1a1e;
+    border-radius: 8px;
+    border: 1px solid rgba(0, 255, 162, 0.2);
+}
+
+.nav-link {
+    display: inline-block;
+    color: #00ffa2;
+    text-decoration: none;
+    padding: 10px 20px;
+    border: 1px solid #00ffa2;
+    border-radius: 6px;
+    font-weight: bold;
+    transition: all 0.3s ease;
+    text-shadow: 0 0 5px rgba(0, 255, 162, 0.3);
+}
+
+.nav-link:hover {
+    background-color: #00ffa2;
+    color: #000;
+    box-shadow: 0 0 15px rgba(0, 255, 162, 0.5);
+    transform: translateY(-2px);
+}
+
+/* Favorite button styling */
+.favorite-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1.2em;
+    padding: 5px;
+    border-radius: 50%;
+    transition: all 0.3s ease;
+    position: relative;
+    margin-right: 10px;
+}
+
+.favorite-btn:hover {
+    transform: scale(1.1);
+    filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.3));
+}
+
+.favorite-btn.favorited {
+    animation: heartBeat 0.3s ease;
+}
+
+@keyframes heartBeat {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1); }
+}
+
+.favorite-btn .heart {
+    display: inline-block;
+    transition: all 0.2s ease;
+}
+
+/* Follow button styling */
+.follow-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1.2em;
+    padding: 5px;
+    border-radius: 50%;
+    transition: all 0.3s ease;
+    position: relative;
+    margin-right: 10px;
+}
+
+.follow-btn:hover {
+    transform: scale(1.1);
+    filter: drop-shadow(0 0 8px rgba(0, 224, 255, 0.3));
+}
+
+.follow-btn.following {
+    animation: bellRing 0.3s ease;
+}
+
+.follow-btn.following .bell {
+    color: #00e0ff;
+    filter: drop-shadow(0 0 4px rgba(0, 224, 255, 0.6));
+}
+
+@keyframes bellRing {
+    0% { transform: rotate(-15deg); }
+    50% { transform: rotate(15deg); }
+    100% { transform: rotate(0deg); }
+}
+
+.follow-btn .bell {
+    display: inline-block;
+    transition: all 0.2s ease;
+}
+
+/* Restaurant actions container */
+.restaurant-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* Favorites page specific styling */
+.favorites-header {
+    text-align: center;
+    margin: 20px 0;
+    padding: 15px;
+    background-color: #1a1a1e;
+    border-radius: 8px;
+    border-left: 3px solid #ff6b9d;
+}
+
+.favorites-header p {
+    font-size: 1.1em;
+    color: #e4e4eb;
+    margin: 0;
+}
+
+.favorites-count {
+    color: #ff6b9d;
+    font-weight: bold;
+    text-shadow: 0 0 5px rgba(255, 107, 157, 0.3);
+}
+
+.favorites-list {
+    margin-top: 20px;
+}
+
+.favorite-restaurant-item {
+    background-color: #1b1b1f;
+    border-radius: 10px;
+    margin-bottom: 15px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    box-shadow: 0 0 0 rgba(255, 107, 157, 0);
+    border: 1px solid rgba(255, 107, 157, 0.1);
+}
+
+.favorite-restaurant-item:hover {
+    box-shadow: 0 0 15px rgba(255, 107, 157, 0.2);
+    border-color: rgba(255, 107, 157, 0.3);
+}
+
+.favorite-restaurant-item .restaurant-header {
+    padding: 20px;
+    background-color: #212126;
+}
+
+.favorite-date {
+    display: block;
+    color: #ff6b9d;
+    font-size: 0.8em;
+    margin-top: 5px;
+    font-style: italic;
+}
+
+.no-favorites {
+    text-align: center;
+    padding: 60px 20px;
+    background-color: #1a1a1e;
+    border-radius: 12px;
+    border: 2px dashed rgba(255, 107, 157, 0.3);
+}
+
+.no-favorites p {
+    font-size: 1.1em;
+    color: #b0b0b0;
+    margin: 15px 0;
+}
+
+.search-btn {
+    display: inline-block;
+    margin-top: 20px;
+    padding: 12px 25px;
+    background: linear-gradient(90deg, #ff6b9d, #00e0ff);
+    color: #000;
+    text-decoration: none;
+    border-radius: 8px;
+    font-weight: bold;
+    transition: all 0.3s ease;
+    text-shadow: none;
+}
+
+.search-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0 20px rgba(255, 107, 157, 0.4);
+}
+
+/* Message animation */
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* === PAGINATION STYLING === */
+
+.pagination-info {
+    text-align: center;
+    margin: 15px 0;
+    padding: 10px;
+    background-color: #1a1a1e;
+    border-radius: 6px;
+    border: 1px solid rgba(0, 255, 162, 0.2);
+}
+
+.pagination-info p {
+    color: #00ffa2;
+    margin: 0;
+    font-size: 0.9em;
+    font-weight: bold;
+}
+
+.pagination {
+    margin: 30px 0;
+    display: flex;
+    justify-content: center;
+}
+
+/* === FOLLOWED RESTAURANTS & NOTIFICATIONS STYLING === */
+
+/* Navigation links with counters */
+.nav-link {
+    padding: 8px 16px;
+    margin: 0 5px;
+    background-color: #1a1a1e;
+    color: #00e0ff;
+    text-decoration: none;
+    border-radius: 6px;
+    border: 1px solid #333;
+    transition: all 0.3s ease;
+}
+
+.nav-link:hover, .nav-link.active {
+    background-color: #00e0ff;
+    color: #0a0a0d;
+    text-decoration: none;
+}
+
+/* Followed restaurants summary */
+.followed-summary {
+    text-align: center;
+    margin: 20px 0;
+    padding: 20px;
+    background-color: #1a1a1e;
+    border-radius: 8px;
+    border: 1px solid #333;
+}
+
+/* Followed restaurant cards */
+.followed-restaurant {
+    margin-bottom: 20px;
+    padding: 20px;
+    background-color: #1a1a1e;
+    border: 1px solid #333;
+    border-radius: 8px;
+    border-left: 4px solid #00e0ff;
+}
+
+/* Notification preferences */
+.notification-preferences {
+    margin-top: 15px;
+    padding: 15px;
+    background-color: #0f0f12;
+    border-radius: 6px;
+    border: 1px solid #2a2a2e;
+}
+
+.notification-preferences h4 {
+    margin: 0 0 10px 0;
+    color: #b0b0ff;
+    font-size: 14px;
+}
+
+.preference-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.preference-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: #e4e4eb;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.preference-item input[type="checkbox"] {
+    accent-color: #00e0ff;
+}
+
+/* Recent notifications preview */
+.recent-notifications {
+    margin: 20px 0;
+    padding: 20px;
+    background-color: #1a1a1e;
+    border-radius: 8px;
+    border: 1px solid #333;
+}
+
+.notification-preview {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.notification-item {
+    padding: 12px;
+    background-color: #0f0f12;
+    border-radius: 6px;
+    border-left: 3px solid #00e0ff;
+}
+
+.notification-item.unread {
+    border-left-color: #ffaa00;
+    background-color: #1a1714;
+}
+
+.notification-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 6px;
+    font-size: 12px;
+}
+
+.notification-type {
+    color: #00e0ff;
+    font-weight: bold;
+}
+
+.notification-time {
+    color: #999;
+}
+
+.notification-item h4 {
+    margin: 0 0 5px 0;
+    color: #e4e4eb;
+    font-size: 14px;
+}
+
+.notification-item p {
+    margin: 0;
+    color: #ccc;
+    font-size: 13px;
+}
+
+.view-all-notifications {
+    display: inline-block;
+    margin-top: 10px;
+    color: #00e0ff;
+    text-decoration: none;
+    font-size: 14px;
+}
+
+.view-all-notifications:hover {
+    color: #b0b0ff;
+    text-decoration: underline;
+}
+
+/* Restaurant notifications section */
+.restaurant-notifications {
+    margin-top: 15px;
+    padding: 12px;
+    background-color: #0f0f12;
+    border-radius: 6px;
+    border: 1px solid #2a2a2e;
+}
+
+.restaurant-notifications h4 {
+    margin: 0 0 8px 0;
+    color: #b0b0ff;
+    font-size: 13px;
+}
+
+.mini-notification {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 4px 0;
+    font-size: 11px;
+    color: #ccc;
+    border-bottom: 1px solid #2a2a2e;
+}
+
+.mini-notification:last-child {
+    border-bottom: none;
+}
+
+/* Benefits list for empty states */
+.benefits-list {
+    text-align: left;
+    max-width: 500px;
+    margin: 20px auto;
+    padding-left: 20px;
+}
+
+.benefits-list li {
+    margin-bottom: 8px;
+    color: #ccc;
+    line-height: 1.4;
+}
+
+/* CTA buttons */
+.cta-button {
+    display: inline-block;
+    padding: 12px 24px;
+    background-color: #00e0ff;
+    color: #0a0a0d;
+    text-decoration: none;
+    border-radius: 6px;
+    font-weight: bold;
+    transition: all 0.3s ease;
+    margin: 10px;
+}
+
+.cta-button:hover {
+    background-color: #00b8cc;
+    color: #0a0a0d;
+    text-decoration: none;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 224, 255, 0.3);
+}
+
+/* Responsive design for mobile */
+@media (max-width: 768px) {
+    .preference-controls {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .notification-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+    }
+    
+    .restaurant-actions {
+        flex-wrap: wrap;
+    }
+    
+    nav {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+}
+
+.pagination-controls {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 15px 25px;
+    background: linear-gradient(135deg, #1a1a1e 0%, #2a2a2e 100%);
+    border-radius: 12px;
+    border: 1px solid rgba(0, 255, 255, 0.2);
+    box-shadow: 0 0 15px rgba(0, 255, 255, 0.1);
+}
+
+.page-link {
+    display: inline-block;
+    padding: 8px 16px;
+    background: linear-gradient(90deg, #00e0ff, #00ffa2);
+    color: #000;
+    text-decoration: none;
+    border-radius: 6px;
+    font-weight: bold;
+    font-size: 0.9em;
+    transition: all 0.3s ease;
+    text-shadow: none;
+}
+
+.page-link:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0 12px rgba(0, 255, 162, 0.4);
+    filter: brightness(1.1);
+}
+
+.page-info {
+    color: #00e0ff;
+    font-weight: bold;
+    font-size: 1em;
+    text-shadow: 0 0 5px rgba(0, 224, 255, 0.3);
+    padding: 0 10px;
 }
