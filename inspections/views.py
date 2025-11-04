@@ -283,6 +283,7 @@ def restaurant_detail(request, camis):
 # === Owner Auth & Dashboard ===
 from django.shortcuts import redirect
 
+
 def owner_signup(request):
     if request.method == "POST":
         form = OwnerSignUpForm(request.POST)
@@ -293,6 +294,7 @@ def owner_signup(request):
     else:
         form = OwnerSignUpForm()
     return render(request, "inspections/owner_signup.html", {"form": form})
+
 
 def owner_login(request):
     if request.method == "POST":
@@ -305,19 +307,21 @@ def owner_login(request):
         form = AuthenticationForm()
     return render(request, "inspections/owner_login.html", {"form": form})
 
+
 @login_required
 def owner_dashboard(request):
     # For demo: show all restaurants (in real app, filter by ownership)
     restaurants = RestaurantInspection.objects.all()[:20]
     # Show rating for each
     restaurant_ratings = [
-        {
-            "restaurant": r,
-            "rating": RestaurantInspection.get_restaurant_rating(r.CAMIS)
-        }
+        {"restaurant": r, "rating": RestaurantInspection.get_restaurant_rating(r.CAMIS)}
         for r in restaurants
     ]
-    return render(request, "inspections/owner_dashboard.html", {"restaurant_ratings": restaurant_ratings})
+    return render(
+        request,
+        "inspections/owner_dashboard.html",
+        {"restaurant_ratings": restaurant_ratings},
+    )
 
 
 @require_POST
