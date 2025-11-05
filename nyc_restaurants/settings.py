@@ -12,7 +12,6 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 from pathlib import Path
 import os
-from urllib.parse import urlparse
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -23,20 +22,27 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
 # Read from environment in production; fallback only for local dev
-SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'django-insecure-65a%ceg#3mcmqn=&wo89)0gh0n1b-r@@6g+6cqc7!-x4q!ck=6')
+SECRET_KEY = os.getenv(
+    "DJANGO_SECRET_KEY",
+    "django-insecure-65a%ceg#3mcmqn=&wo89)0gh0n1b-r@@6g+6cqc7!-x4q!ck=6",
+)
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv('DJANGO_DEBUG', 'True').lower() in ('1', 'true', 'yes')
+DEBUG = os.getenv("DJANGO_DEBUG", "True").lower() in ("1", "true", "yes")
+
 
 def _split_env_list(value: str):
-    return [h.strip() for h in value.split(',') if h.strip()]
+    return [h.strip() for h in value.split(",") if h.strip()]
+
 
 # Use environment variables for allowed hosts, with fallback for local development
 # This allows for flexible deployment across different platforms
-ALLOWED_HOSTS = _split_env_list(os.getenv('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1'))
+ALLOWED_HOSTS = _split_env_list(
+    os.getenv("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1")
+)
 
 # Trusted origins for CSRF when behind a proxy/hosted domain
-CSRF_TRUSTED_ORIGINS = _split_env_list(os.getenv('DJANGO_CSRF_TRUSTED_ORIGINS', ''))
+CSRF_TRUSTED_ORIGINS = _split_env_list(os.getenv("DJANGO_CSRF_TRUSTED_ORIGINS", ""))
 
 # Application definition
 
@@ -93,7 +99,7 @@ DATABASES = {
 }
 
 # Honor X-Forwarded-Proto/SSL when behind a proxy (e.g., Render/Heroku)
-SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 # Use secure cookies when not in DEBUG
 SESSION_COOKIE_SECURE = not DEBUG
