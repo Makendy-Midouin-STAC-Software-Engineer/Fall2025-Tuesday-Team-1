@@ -59,13 +59,14 @@ jobs:
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
       continue-on-error: true
-  deploy-staging:
+
+  deploy:
     needs: test
     runs-on: ubuntu-latest
     if: |
-      github.ref == 'refs/heads/develop' && 
+      (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main') && 
       github.event_name == 'push' &&
-      contains(github.event.head_commit.message, '[TRIGGER_DEPLOY]')
+      contains(github.event.head_commit.message, 'TRIGGER-DEPLOY')
     
     steps:
     - uses: actions/checkout@v4
@@ -79,37 +80,9 @@ jobs:
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: us-east-1
     
-    - name: Deploy to Elastic Beanstalk (Staging)
+    - name: Deploy to Elastic Beanstalk
       run: |
-        # Install EB CLI
-        pip install awsebcli
-        
-        # Initialize and deploy
-        eb init -p python-3.13 NYC_App --region us-east-1
-        eb deploy nyc-app-env
-  deploy-production:
-    needs: test
-    runs-on: ubuntu-latest
-    if: |
-      github.ref == 'refs/heads/main' && 
-      github.event_name == 'push' &&
-      contains(github.event.head_commit.message, '[TRIGGER_DEPLOY]')
-    
-    steps:
-    - uses: actions/checkout@v4
-      with:
-        lfs: true
-    
-    - name: Configure AWS Credentials
-      uses: aws-actions/configure-aws-credentials@v4
-      with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: us-east-1
-    
-    - name: Deploy to Elastic Beanstalk (Production)
-      run: |
-        # Install EB CLI
+        # Install AWS EB CLI
         pip install awsebcli
         
         # Initialize and deploy
