@@ -544,6 +544,11 @@ def update_notification_preferences(request):
     if not camis or not notification_type:
         return JsonResponse({"error": "Missing parameters"}, status=400)
 
+    # Validate notification_type BEFORE database lookup
+    valid_types = ["grade_changes", "new_inspections", "violations"]
+    if notification_type not in valid_types:
+        return JsonResponse({"error": "Invalid notification type"}, status=400)
+
     # Ensure session exists
     if not request.session.session_key:
         request.session.create()
@@ -560,8 +565,6 @@ def update_notification_preferences(request):
             followed.notify_new_inspections = enabled
         elif notification_type == "violations":
             followed.notify_violations = enabled
-        else:
-            return JsonResponse({"error": "Invalid notification type"}, status=400)
 
         followed.save()
 
