@@ -1,11 +1,32 @@
-<<<<<<< HEAD
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth import login, logout
+from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 from django.contrib.auth.models import User
-from django.contrib.auth.forms import UserCreationForm
+
+from django.db.models import Q
+from datetime import date
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+
+from inspections.models import (
+    RestaurantInspection,
+    RestaurantReview,
+    FavoriteRestaurant,
+    FollowedRestaurant,
+    RestaurantNotification,
+    RestaurantDetails,
+    RestaurantMonthlySales,
+    OwnerRestaurant,
+)
+
+from .forms import OwnerSignUpForm
+
 
 def customer_welcome(request):
     return render(request, "inspections/customer_welcome.html")
+
 
 def customer_signup(request):
     if request.method == "POST":
@@ -16,12 +37,17 @@ def customer_signup(request):
             # Sync session favorites/followed to user
             session_key = request.session.session_key
             if session_key:
-                FavoriteRestaurant.objects.filter(session_key=session_key, user__isnull=True).update(user=user)
-                FollowedRestaurant.objects.filter(session_key=session_key, user__isnull=True).update(user=user)
+                FavoriteRestaurant.objects.filter(
+                    session_key=session_key, user__isnull=True
+                ).update(user=user)
+                FollowedRestaurant.objects.filter(
+                    session_key=session_key, user__isnull=True
+                ).update(user=user)
             return redirect("search_restaurants")
     else:
         form = UserCreationForm()
     return render(request, "inspections/customer_signup.html", {"form": form})
+
 
 def customer_login(request):
     if request.method == "POST":
@@ -32,41 +58,27 @@ def customer_login(request):
             # Sync session favorites/followed to user
             session_key = request.session.session_key
             if session_key:
-                FavoriteRestaurant.objects.filter(session_key=session_key, user__isnull=True).update(user=user)
-                FollowedRestaurant.objects.filter(session_key=session_key, user__isnull=True).update(user=user)
+                FavoriteRestaurant.objects.filter(
+                    session_key=session_key, user__isnull=True
+                ).update(user=user)
+                FollowedRestaurant.objects.filter(
+                    session_key=session_key, user__isnull=True
+                ).update(user=user)
             return redirect("search_restaurants")
     else:
         form = AuthenticationForm()
     return render(request, "inspections/customer_login.html", {"form": form})
 
+
 @login_required
 def customer_dashboard(request):
     favorites = FavoriteRestaurant.objects.filter(user=request.user)
     followed = FollowedRestaurant.objects.filter(user=request.user)
-    return render(request, "inspections/customer_dashboard.html", {"favorites": favorites, "followed": followed})
-from .models import RestaurantInspection, RestaurantMonthlySales
-from django.db import models
-=======
-from django.shortcuts import render, redirect
->>>>>>> c007b54eb366bfd83c4f78f35e6a8b2b1d3e57c6
-from inspections.models import (
-    RestaurantInspection,
-    RestaurantReview,
-    FavoriteRestaurant,
-    FollowedRestaurant,
-    RestaurantNotification,
-)
-from django.db.models import Q
-from datetime import date
-from django.http import JsonResponse
-from django.views.decorators.http import require_POST
-from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-
-# Auth imports
-from django.contrib.auth import login
-from django.contrib.auth.forms import AuthenticationForm
-from django.contrib.auth.decorators import login_required
-from .forms import OwnerSignUpForm
+    return render(
+        request,
+        "inspections/customer_dashboard.html",
+        {"favorites": favorites, "followed": followed},
+    )
 
 
 def search_restaurants(request):
@@ -278,12 +290,16 @@ def add_review(request):
                 review_text=review_text,
             )
             return render(
-                request, "inspections/review_success.html", {"restaurant_name": restaurant_name}
+                request,
+                "inspections/review_success.html",
+                {"restaurant_name": restaurant_name},
             )
     # If GET or invalid POST, try to get restaurant_name from form data if present
     if not restaurant_name:
         restaurant_name = request.POST.get("restaurant_name", "")
-    return render(request, "inspections/add_review.html", {"restaurant_name": restaurant_name})
+    return render(
+        request, "inspections/add_review.html", {"restaurant_name": restaurant_name}
+    )
 
 
 def restaurant_detail(request, camis):
@@ -363,37 +379,74 @@ def owner_login(request):
 @login_required
 def owner_dashboard(request):
     from .models import OwnerRestaurant
+
     add_success = None
     if request.method == "POST" and "add_camis" in request.POST:
         camis = request.POST.get("add_camis").strip()
         restaurant = RestaurantInspection.objects.filter(CAMIS=camis).first()
         if restaurant:
-            OwnerRestaurant.objects.get_or_create(user=request.user, restaurant=restaurant)
+            OwnerRestaurant.objects.get_or_create(
+                user=request.user, restaurant=restaurant
+            )
             add_success = restaurant.DBA
     owner_restaurants = OwnerRestaurant.objects.filter(user=request.user)
     dashboard_data = []
     for entry in owner_restaurants:
         r = entry.restaurant
         rating = RestaurantInspection.get_restaurant_rating(r.CAMIS)
-        reviews = RestaurantReview.objects.filter(camis=r.CAMIS).order_by('-review_date')
+        reviews = RestaurantReview.objects.filter(camis=r.CAMIS).order_by(
+            "-review_date"
+        )
         import collections, re
+
         keywords = []
         for review in reviews[:10]:
-            words = re.findall(r'\w+', review.review_text.lower())
+            words = re.findall(r"\w+", review.review_text.lower())
             keywords.extend(words)
-        common_issues = [w for w, c in collections.Counter(keywords).most_common(5) if w not in ['the','and','to','of','a','is','in','for','it','was','with','on','at','by','an','be','as','are','from']]
+        common_issues = [
+            w
+            for w, c in collections.Counter(keywords).most_common(5)
+            if w
+            not in [
+                "the",
+                "and",
+                "to",
+                "of",
+                "a",
+                "is",
+                "in",
+                "for",
+                "it",
+                "was",
+                "with",
+                "on",
+                "at",
+                "by",
+                "an",
+                "be",
+                "as",
+                "are",
+                "from",
+            ]
+        ]
         alert = None
         rating_threshold = 3.5
-        if rating['stars'] < rating_threshold:
+        if rating["stars"] < rating_threshold:
             alert = f"Alert: Rating dropped below {rating_threshold} stars! Immediate action recommended."
-        dashboard_data.append({
-            "restaurant": r,
-            "rating": rating,
-            "feedback_trends": common_issues,
-            "rating_alert": alert,
-            "reviews": reviews[:5],
-        })
-    return render(request, "inspections/owner_dashboard.html", {"dashboard_data": dashboard_data, "add_success": add_success})
+        dashboard_data.append(
+            {
+                "restaurant": r,
+                "rating": rating,
+                "feedback_trends": common_issues,
+                "rating_alert": alert,
+                "reviews": reviews[:5],
+            }
+        )
+    return render(
+        request,
+        "inspections/owner_dashboard.html",
+        {"dashboard_data": dashboard_data, "add_success": add_success},
+    )
 
 
 @require_POST
@@ -600,17 +653,6 @@ def notifications_list(request):
         notifications = RestaurantNotification.objects.filter(
             followed_restaurant__session_key=session_key
         ).order_by("-created_at")
-# Logout views for consumer and owner
-from django.contrib.auth import logout
-
-def customer_logout(request):
-    logout(request)
-    return redirect('search_restaurants')
-
-def owner_logout(request):
-    logout(request)
-    return redirect('owner_login')
-
     # Mark all notifications as read when viewed
     notifications.filter(is_read=False).update(is_read=True)
 
@@ -620,6 +662,17 @@ def owner_logout(request):
     }
 
     return render(request, "inspections/notifications.html", context)
+
+
+# Logout views for consumer and owner
+def customer_logout(request):
+    logout(request)
+    return redirect("search_restaurants")
+
+
+def owner_logout(request):
+    logout(request)
+    return redirect("owner_login")
 
 
 @require_POST

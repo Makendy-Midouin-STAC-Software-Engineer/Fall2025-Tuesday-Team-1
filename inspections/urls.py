@@ -20,12 +20,14 @@ urlpatterns = [
     # Owner auth & dashboard
     path("owner/signup/", views.owner_signup, name="owner_signup"),
     path("owner/login/", views.owner_login, name="owner_login"),
-        path("owner/logout/", views.owner_logout, name="owner_logout"),
+    path("owner/logout/", views.owner_logout, name="owner_logout"),
     path("owner/dashboard/", views.owner_dashboard, name="owner_dashboard"),
-
     # Customer auth & dashboard
+    path(
+        "customer/welcome/", views.customer_welcome, name="customer_welcome"
+    ),  # ADD THIS LINE
     path("customer/signup/", views.customer_signup, name="customer_signup"),
     path("customer/login/", views.customer_login, name="customer_login"),
-        path("customer/logout/", views.customer_logout, name="customer_logout"),
+    path("customer/logout/", views.customer_logout, name="customer_logout"),
     path("customer/dashboard/", views.customer_dashboard, name="customer_dashboard"),
 ]

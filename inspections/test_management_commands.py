@@ -3,6 +3,7 @@ from django.test import TestCase
 from inspections.models import RestaurantInspection, FollowedRestaurant
 from io import StringIO
 
+
 class ManagementCommandsTestCase(TestCase):
 
     def test_check_restaurant_updates_days_argument(self):
@@ -13,6 +14,7 @@ class ManagementCommandsTestCase(TestCase):
     def test_check_restaurant_updates_no_followed(self):
         # Remove all followed restaurants
         from inspections.models import FollowedRestaurant
+
         FollowedRestaurant.objects.all().delete()
         out = StringIO()
         call_command("check_restaurant_updates", stdout=out)
@@ -22,6 +24,7 @@ class ManagementCommandsTestCase(TestCase):
         # Set last_inspection_date to today so no new inspections
         from inspections.models import FollowedRestaurant
         import datetime
+
         fr = FollowedRestaurant.objects.first()
         fr.last_inspection_date = datetime.date.today()
         fr.save()
