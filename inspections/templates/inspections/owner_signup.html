@@ -1,0 +1,20 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Owner Sign Up</title>
+    <link rel="stylesheet" href="{% static 'inspections/style.css' %}">
+</head>
+<body class="dark-mode">
+    <div class="container">
+        <h1>Restaurant Owner Sign Up</h1>
+        <form method="post">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit" class="btn">Sign Up</button>
+        </form>
+        <p>Already have an account? <a href="{% url 'owner_login' %}">Log in here</a>.</p>
+    </div>
+</body>
+</html>

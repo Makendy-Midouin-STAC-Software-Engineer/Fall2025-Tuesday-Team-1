@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from inspections.models import (
     RestaurantInspection,
     RestaurantReview,
@@ -11,6 +11,12 @@ from datetime import date
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+
+# Auth imports
+from django.contrib.auth import login
+from django.contrib.auth.forms import AuthenticationForm
+from django.contrib.auth.decorators import login_required
+from .forms import OwnerSignUpForm
 
 
 def search_restaurants(request):
@@ -50,10 +56,9 @@ def search_restaurants(request):
             "CAMIS", "-INSPECTION_DATE"
         )
 
-        # Process to get unique restaurants (first 100 for performance)
+        # Process to get all unique restaurants (no hard limit)
         seen_camis = set()
         limited_restaurants = []
-
         for inspection in inspections:
             if inspection.CAMIS not in seen_camis:
                 seen_camis.add(inspection.CAMIS)
@@ -68,10 +73,6 @@ def search_restaurants(request):
                         "CUISINE_DESCRIPTION": inspection.CUISINE_DESCRIPTION,
                     }
                 )
-
-                # Limit to 100 restaurants for performance
-                if len(limited_restaurants) >= 100:
-                    break
 
         # Get latest inspections for all restaurants in one query (much faster)
         camis_list = [rest["CAMIS"] for rest in limited_restaurants]
@@ -279,6 +280,49 @@ def restaurant_detail(request, camis):
     return render(request, "inspections/restaurant_detail.html", context)
 
 
+# === Owner Auth & Dashboard ===
+
+
+def owner_signup(request):
+    if request.method == "POST":
+        form = OwnerSignUpForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            login(request, user)
+            return redirect("owner_dashboard")
+    else:
+        form = OwnerSignUpForm()
+    return render(request, "inspections/owner_signup.html", {"form": form})
+
+
+def owner_login(request):
+    if request.method == "POST":
+        form = AuthenticationForm(request, data=request.POST)
+        if form.is_valid():
+            user = form.get_user()
+            login(request, user)
+            return redirect("owner_dashboard")
+    else:
+        form = AuthenticationForm()
+    return render(request, "inspections/owner_login.html", {"form": form})
+
+
+@login_required
+def owner_dashboard(request):
+    # For demo: show all restaurants (in real app, filter by ownership)
+    restaurants = RestaurantInspection.objects.all()[:20]
+    # Show rating for each
+    restaurant_ratings = [
+        {"restaurant": r, "rating": RestaurantInspection.get_restaurant_rating(r.CAMIS)}
+        for r in restaurants
+    ]
+    return render(
+        request,
+        "inspections/owner_dashboard.html",
+        {"restaurant_ratings": restaurant_ratings},
+    )
+
+
 @require_POST
 def toggle_favorite(request):
     """Toggle favorite status for a restaurant via AJAX"""
@@ -437,12 +481,18 @@ def followed_restaurants(request):
                 followed_restaurant=follow
             )[:3]
 
+            # Get full notification history for dropdown
+            notification_history = RestaurantNotification.objects.filter(
+                followed_restaurant=follow
+            ).order_by("-created_at")
+
             followed_restaurants_list.append(
                 {
                     "follow": follow,
                     "restaurant": restaurant,
                     "rating": rating_info,
                     "recent_notifications": recent_notifications,
+                    "notification_history": notification_history,
                 }
             )
 

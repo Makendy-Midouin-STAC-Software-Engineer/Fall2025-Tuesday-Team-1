@@ -6,10 +6,21 @@
 .gitignore
 README.md
 .vscode/
+.elasticbeanstalk/logs/**
+
+# Python compiled files
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
+
+# Logs and environment files
+*.log
+.DS_Store
+node_modules/
 .env
-venv/
+.env.*
+
+# Virtual environments
 .venv/
+venv/
