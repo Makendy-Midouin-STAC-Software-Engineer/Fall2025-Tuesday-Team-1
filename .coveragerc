@@ -12,6 +12,7 @@ omit =
     */__pycache__/*
     */tests.py
     .elasticbeanstalk/*
+    */management/commands/*
 
 [report]
 exclude_lines =

@@ -1,8 +1,11 @@
-def customer_welcome(request):
-    return render(request, "inspections/customer_welcome.html")
+<<<<<<< HEAD
+from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.contrib.auth.forms import UserCreationForm
+
+def customer_welcome(request):
+    return render(request, "inspections/customer_welcome.html")
 
 def customer_signup(request):
     if request.method == "POST":
@@ -38,13 +41,14 @@ def customer_login(request):
 
 @login_required
 def customer_dashboard(request):
-    # Show user's favorites and followed restaurants
     favorites = FavoriteRestaurant.objects.filter(user=request.user)
     followed = FollowedRestaurant.objects.filter(user=request.user)
     return render(request, "inspections/customer_dashboard.html", {"favorites": favorites, "followed": followed})
-from django.shortcuts import render
 from .models import RestaurantInspection, RestaurantMonthlySales
 from django.db import models
+=======
+from django.shortcuts import render, redirect
+>>>>>>> c007b54eb366bfd83c4f78f35e6a8b2b1d3e57c6
 from inspections.models import (
     RestaurantInspection,
     RestaurantReview,
@@ -59,7 +63,7 @@ from django.views.decorators.http import require_POST
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 
 # Auth imports
-from django.contrib.auth import authenticate, login
+from django.contrib.auth import login
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.decorators import login_required
 from .forms import OwnerSignUpForm
@@ -330,7 +334,7 @@ def restaurant_detail(request, camis):
 
 
 # === Owner Auth & Dashboard ===
-from django.shortcuts import redirect
+
 
 def owner_signup(request):
     if request.method == "POST":
@@ -343,6 +347,7 @@ def owner_signup(request):
         form = OwnerSignUpForm()
     return render(request, "inspections/owner_signup.html", {"form": form})
 
+
 def owner_login(request):
     if request.method == "POST":
         form = AuthenticationForm(request, data=request.POST)
@@ -354,11 +359,10 @@ def owner_login(request):
         form = AuthenticationForm()
     return render(request, "inspections/owner_login.html", {"form": form})
 
+
 @login_required
 def owner_dashboard(request):
-    # Filtering logic
     from .models import OwnerRestaurant
-    # Handle add restaurant form
     add_success = None
     if request.method == "POST" and "add_camis" in request.POST:
         camis = request.POST.get("add_camis").strip()
@@ -366,7 +370,6 @@ def owner_dashboard(request):
         if restaurant:
             OwnerRestaurant.objects.get_or_create(user=request.user, restaurant=restaurant)
             add_success = restaurant.DBA
-    # Only show restaurants added by this owner
     owner_restaurants = OwnerRestaurant.objects.filter(user=request.user)
     dashboard_data = []
     for entry in owner_restaurants:
@@ -629,6 +632,11 @@ def update_notification_preferences(request):
     if not camis or not notification_type:
         return JsonResponse({"error": "Missing parameters"}, status=400)
 
+    # Validate notification_type BEFORE database lookup
+    valid_types = ["grade_changes", "new_inspections", "violations"]
+    if notification_type not in valid_types:
+        return JsonResponse({"error": "Invalid notification type"}, status=400)
+
     # Ensure session exists
     if not request.session.session_key:
         request.session.create()
@@ -645,8 +653,6 @@ def update_notification_preferences(request):
             followed.notify_new_inspections = enabled
         elif notification_type == "violations":
             followed.notify_violations = enabled
-        else:
-            return JsonResponse({"error": "Invalid notification type"}, status=400)
 
         followed.save()
 
