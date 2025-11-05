@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from inspections.models import (
     RestaurantInspection,
     RestaurantReview,
@@ -13,7 +13,7 @@ from django.views.decorators.http import require_POST
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 
 # Auth imports
-from django.contrib.auth import authenticate, login
+from django.contrib.auth import login
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.decorators import login_required
 from .forms import OwnerSignUpForm
@@ -281,7 +281,6 @@ def restaurant_detail(request, camis):
 
 
 # === Owner Auth & Dashboard ===
-from django.shortcuts import redirect
 
 
 def owner_signup(request):
