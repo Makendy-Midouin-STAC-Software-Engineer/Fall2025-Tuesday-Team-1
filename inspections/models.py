@@ -1,4 +1,32 @@
 from django.db import models
+class OwnerRestaurant(models.Model):
+    user = models.ForeignKey('auth.User', on_delete=models.CASCADE)
+    restaurant = models.ForeignKey('RestaurantInspection', on_delete=models.CASCADE)
+    date_added = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('user', 'restaurant')
+        ordering = ['-date_added']
+
+    def __str__(self):
+        return f"{self.user.username} - {self.restaurant.DBA}"
+from django.db import models
+from django.db.models import Avg
+from datetime import datetime, timedelta
+
+class RestaurantMonthlySales(models.Model):
+    camis = models.BigIntegerField()  # Link to RestaurantInspection
+    month = models.DateField()  # Use first day of month
+    sales = models.FloatField()  # Monthly sales amount
+
+    class Meta:
+        unique_together = ("camis", "month")
+        ordering = ["-month"]
+
+    def __str__(self):
+        return f"{self.camis} - {self.month.strftime('%Y-%m')}: ${self.sales:,.2f}"
+        
+from django.db import models
 from django.db.models import Avg
 from datetime import datetime, timedelta
 
@@ -200,12 +228,14 @@ class RestaurantDetails(models.Model):
 
     @property
     def hours_today(self):
-        """Get today's hours"""
+        """Get today's hours, always returns a string."""
         import datetime
-
         today = datetime.datetime.now().strftime("%A").lower()
         hours_field = f"{today}_hours"
-        return getattr(self, hours_field, "Hours not available")
+        hours = getattr(self, hours_field, None)
+        if not hours:
+            return "Hours not available"
+        return hours
 
     @property
     def is_open_now(self):
@@ -240,6 +270,7 @@ class FavoriteRestaurant(models.Model):
     """Track user's favorite restaurants using session ID for anonymous users"""
 
     session_key = models.CharField(max_length=40)  # Django session key
+    user = models.ForeignKey('auth.User', null=True, blank=True, on_delete=models.CASCADE)
     camis = models.BigIntegerField()  # Restaurant identifier
     restaurant_name = models.CharField(max_length=255)
     date_added = models.DateTimeField(auto_now_add=True)
@@ -256,6 +287,7 @@ class FollowedRestaurant(models.Model):
     """Track restaurants users are following for health and rating updates"""
 
     session_key = models.CharField(max_length=40)  # Django session key
+    user = models.ForeignKey('auth.User', null=True, blank=True, on_delete=models.CASCADE)
     camis = models.BigIntegerField()  # Restaurant identifier
     restaurant_name = models.CharField(max_length=255)
     date_followed = models.DateTimeField(auto_now_add=True)

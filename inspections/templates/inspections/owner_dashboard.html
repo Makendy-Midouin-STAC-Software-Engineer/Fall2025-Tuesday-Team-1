@@ -44,12 +44,23 @@
 </head>
 <body class="dark-mode">
     <div class="container">
+        <form method="post" style="margin-bottom:20px;display:flex;gap:20px;flex-wrap:wrap;">
+            {% csrf_token %}
+            <label>Search and Add Restaurant by CAMIS:
+                <input type="text" name="add_camis" placeholder="Enter CAMIS ID">
+            </label>
+            <button type="submit" class="btn">Add to My Dashboard</button>
+        </form>
+        {% if add_success %}
+            <div style="color:#00e0ff;margin-bottom:10px;">Successfully added: {{ add_success }}</div>
+        {% endif %}
         <div class="dashboard-header">
             <h1>Owner Dashboard</h1>
             <span>Welcome, {{ user.username }}!</span>
+            <a href="{% url 'search_restaurants' %}" class="btn" style="margin-left:20px;">Back to Customer Search</a>
         </div>
-        <h2>Your Restaurants and Ratings</h2>
-        {% if restaurant_ratings %}
+    <h2>Your Restaurants</h2>
+        {% if dashboard_data %}
         <table class="dashboard-table">
             <tr>
                 <th>Name</th>
@@ -58,8 +69,11 @@
                 <th>Stars</th>
                 <th>Description</th>
                 <th>Inspections</th>
+                <th>Feedback Trends</th>
+                <th>Recent Reviews</th>
+                <th>Alerts</th>
             </tr>
-            {% for item in restaurant_ratings %}
+            {% for item in dashboard_data %}
             <tr>
                 <td>{{ item.restaurant.DBA }}</td>
                 <td>{{ item.restaurant.BUILDING }} {{ item.restaurant.STREET }}, {{ item.restaurant.BORO }}</td>
@@ -67,6 +81,29 @@
                 <td>{{ item.rating.stars }}</td>
                 <td>{{ item.rating.description }}</td>
                 <td>{{ item.rating.inspection_count }}</td>
+                <td>
+                    {% if item.feedback_trends %}
+                        {% for word in item.feedback_trends %}
+                            <span style="background:#222;padding:2px 6px;border-radius:6px;margin:2px;display:inline-block;">{{ word }}</span>
+                        {% endfor %}
+                    {% else %}
+                        No trends yet
+                    {% endif %}
+                </td>
+                <td>
+                    {% for review in item.reviews %}
+                        <strong>{{ review.reviewer_name }}</strong>: {{ review.review_text|truncatewords:12 }}<br>
+                    {% empty %}
+                        No reviews
+                    {% endfor %}
+                </td>
+                <td>
+                    {% if item.rating_alert %}
+                        <span style="color:#ff4444;font-weight:bold;">{{ item.rating_alert }}</span>
+                    {% else %}
+                        &mdash;
+                    {% endif %}
+                </td>
             </tr>
             {% endfor %}
         </table>
