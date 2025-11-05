@@ -1,6 +1,7 @@
 from django.test import TestCase, Client
 from django.urls import reverse
 from django.contrib.auth.models import User
+from inspections.templatetags.extra_filters import get_item
 from inspections.models import (
     RestaurantInspection,
     RestaurantReview,
@@ -9,6 +10,22 @@ from inspections.models import (
     RestaurantNotification,
     RestaurantDetails,
 )
+
+
+class TemplateFilterTests(TestCase):
+    """Tests for custom template filters."""
+
+    def test_get_item_existing_key(self):
+        """Test get_item filter with existing key."""
+        test_dict = {"key1": "value1", "key2": "value2"}
+        result = get_item(test_dict, "key1")
+        self.assertEqual(result, "value1")
+
+    def test_get_item_missing_key(self):
+        """Test get_item filter with missing key returns empty list."""
+        test_dict = {"key1": "value1"}
+        result = get_item(test_dict, "nonexistent_key")
+        self.assertEqual(result, [])
 
 
 class AuthenticatedViewTests(TestCase):
