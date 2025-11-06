@@ -730,3 +730,123 @@ class OwnerDashboardTests(TestCase):
 
         response = self.client.get(reverse("owner_dashboard"))
         self.assertEqual(response.status_code, 200)
+
+class ToggleFunctionalityTests(TestCase):
+    """Test that favorites/follow actually toggle on and off."""
+    
+    def setUp(self):
+        RestaurantInspection.objects.create(
+            CAMIS=12345678,
+            DBA="Test Restaurant",
+            CUISINE_DESCRIPTION="American",
+            INSPECTION_DATE="2024-01-01",
+            ACTION="No violations",
+            GRADE="A",
+            INSPECTION_TYPE="Cycle Inspection / Initial Inspection",
+        )
+    
+    def test_toggle_favorite_adds_then_removes(self):
+        """Test that toggling favorite twice adds then removes it."""
+        response = self.client.post(
+            reverse("toggle_favorite"),
+            {"camis": "12345678"},
+            HTTP_X_REQUESTED_WITH="XMLHttpRequest",
+        )
+        self.assertEqual(response.status_code, 200)
+        
+        self.assertTrue(
+            FavoriteRestaurant.objects.filter(
+                session_key=self.client.session.session_key,
+                camis=12345678
+            ).exists()
+        )
+        
+        response = self.client.post(
+            reverse("toggle_favorite"),
+            {"camis": "12345678"},
+            HTTP_X_REQUESTED_WITH="XMLHttpRequest",
+        )
+        self.assertEqual(response.status_code, 200)
+        
+        self.assertFalse(
+            FavoriteRestaurant.objects.filter(
+                session_key=self.client.session.session_key,
+                camis=12345678
+            ).exists()
+        )
+    
+    def test_toggle_follow_adds_then_removes(self):
+        """Test that toggling follow twice adds then removes it."""
+        response = self.client.post(
+            reverse("toggle_follow"),
+            {"camis": "12345678"},
+            HTTP_X_REQUESTED_WITH="XMLHttpRequest",
+        )
+        self.assertEqual(response.status_code, 200)
+        
+        self.assertTrue(
+            FollowedRestaurant.objects.filter(
+                session_key=self.client.session.session_key,
+                camis=12345678
+            ).exists()
+        )
+        
+        response = self.client.post(
+            reverse("toggle_follow"),
+            {"camis": "12345678"},
+            HTTP_X_REQUESTED_WITH="XMLHttpRequest",
+        )
+        self.assertEqual(response.status_code, 200)
+        
+        self.assertFalse(
+            FollowedRestaurant.objects.filter(
+                session_key=self.client.session.session_key,
+                camis=12345678
+            ).exists()
+        )
+
+class SecurityTests(TestCase):
+    """Test security-related functionality."""
+    
+    def setUp(self):
+        self.user1 = User.objects.create_user('user1', 'user1@test.com', 'pass123')
+        self.user2 = User.objects.create_user('user2', 'user2@test.com', 'pass123')
+        
+        RestaurantInspection.objects.create(
+            CAMIS=12345678,
+            DBA="Test Restaurant",
+            CUISINE_DESCRIPTION="American",
+            INSPECTION_DATE="2024-01-01",
+            GRADE="A",
+            ACTION="No violations",
+            INSPECTION_TYPE="Cycle Inspection / Initial Inspection",
+        )
+    
+    def test_user_cannot_see_other_users_favorites(self):
+        """Test that users can't access other users' favorites."""
+        self.client.login(username='user1', password='pass123')
+        FavoriteRestaurant.objects.create(
+            user=self.user1,
+            camis=12345678,
+            restaurant_name="Test Restaurant"
+        )
+        self.client.logout()
+        
+        self.client.login(username='user2', password='pass123')
+        response = self.client.get(reverse("favorites_list"))
+        
+        self.assertNotContains(response, "Test Restaurant")
+    
+    def test_sql_injection_protection_in_search(self):
+        """Test that search is protected against SQL injection."""
+        malicious_query = "'; DROP TABLE restaurants; --"
+        
+        response = self.client.get(
+            reverse("search_restaurants"),
+            {"q": malicious_query}
+        )
+        
+        self.assertEqual(response.status_code, 200)
+        
+        self.assertTrue(RestaurantInspection.objects.exists())
+    
