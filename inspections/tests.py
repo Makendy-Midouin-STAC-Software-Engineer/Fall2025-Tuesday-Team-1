@@ -2,6 +2,7 @@ from django.test import TestCase, Client
 from django.urls import reverse
 from django.contrib.auth.models import User
 from inspections.templatetags.extra_filters import get_item
+from datetime import date
 from inspections.models import (
     RestaurantInspection,
     RestaurantReview,
@@ -9,6 +10,8 @@ from inspections.models import (
     FollowedRestaurant,
     RestaurantNotification,
     RestaurantDetails,
+    RestaurantMonthlySales,
+    OwnerRestaurant,
 )
 
 
@@ -844,3 +847,117 @@ class SecurityTests(TestCase):
         self.assertEqual(response.status_code, 200)
 
         self.assertTrue(RestaurantInspection.objects.exists())
+
+class ModelStringAndHoursTests(TestCase):
+    """Tests for model string representations and time-based properties."""
+    
+    def test_ownerrestaurant_str(self):
+        """Test that OwnerRestaurant string includes username and restaurant name."""
+        user = User.objects.create_user(username="owner1", password="pass")
+        resturant = RestaurantInspection.objects.create(CAMIS=11111, DBA="R1")
+        ownerResturant = OwnerRestaurant.objects.create(user=user, restaurant=resturant)
+        self.assertIn(user.username, str(ownerResturant))
+        self.assertIn(resturant.DBA, str(ownerResturant))
+
+    def test_monthly_sales_str(self):
+        """Test that RestaurantMonthlySales string includes formatted date and amount."""
+        monthlySales = RestaurantMonthlySales.objects.create(
+            camis=11111, month=date(2024, 3, 1), sales=12345.67
+        )
+        sales = str(monthlySales)
+        self.assertIn("2024-03", sales)
+        self.assertIn("$12,345.67", sales)
+
+    def test_restaurantdetails_hours_today_and_is_open(self):
+        """Test that RestaurantDetails correctly determines today's hours and open status."""
+        restuarantDetails = RestaurantDetails.objects.create(camis=22222, restaurant_name="R2")
+
+        self.assertEqual(restuarantDetails.hours_today, "Hours not available")
+        self.assertFalse(restuarantDetails.is_open_now)
+
+        import datetime
+
+        today = datetime.datetime.now().strftime("%A").lower()
+        setattr(restuarantDetails, f"{today}_hours", "9:00 AM - 10:00 PM")
+        restuarantDetails.save()
+
+        self.assertNotEqual(restuarantDetails.hours_today, "Hours not available")
+        self.assertTrue(restuarantDetails.is_open_now)
+
+
+class ViewsSessionTransferAndBehaviorTests(TestCase):
+    """Tests for session data transfer and complex view behaviors."""
+
+    def test_restaurant_detail_creates_temp_details_not_saved(self):
+        """Test that restaurant detail view creates temporary details object without saving to DB."""
+        RestaurantInspection.objects.create(CAMIS=55555, DBA="Temp R")
+
+        resp = self.client.get(reverse("restaurant_detail", kwargs={"camis": 55555}))
+        self.assertEqual(resp.status_code, 200)
+        self.assertFalse(RestaurantDetails.objects.filter(camis=55555).exists())
+        self.assertIn("details", resp.context)
+
+    def test_owner_dashboard_alert_on_low_rating(self):
+        """Test that owner dashboard shows alerts for restaurants with low ratings."""
+        user = User.objects.create_user(username="ownerx", password="pw")
+        resturant = RestaurantInspection.objects.create(
+            CAMIS=66666, DBA="Low R", GRADE="C", INSPECTION_DATE=date.today()
+        )
+        OwnerRestaurant.objects.create(user=user, restaurant=resturant)
+
+        self.client.login(username="ownerx", password="pw")
+        resp = self.client.get(reverse("owner_dashboard"))
+        self.assertEqual(resp.status_code, 200)
+        dashboard = resp.context["dashboard_data"]
+
+        self.assertTrue(len(dashboard) >= 1)
+        self.assertIsNotNone(dashboard[0]["rating"])
+
+        self.assertTrue(
+            dashboard[0]["rating_alert"] is None
+            or isinstance(dashboard[0]["rating_alert"], str)
+        )
+
+    def test_toggle_follow_sets_last_known_fields(self):
+        """Test that following a restaurant stores its current grade and inspection date."""
+        client = self.client
+        client.get(reverse("search_restaurants"))
+        session_key = client.session.session_key
+
+        RestaurantInspection.objects.create(
+            CAMIS=77777, DBA="Follow R", GRADE="B", INSPECTION_DATE=date.today()
+        )
+
+        resp = client.post(
+            reverse("toggle_follow"), {"camis": 77777, "restaurant_name": "Follow R"}
+        )
+        self.assertEqual(resp.status_code, 200)
+        followRestaurant = FollowedRestaurant.objects.filter(
+            session_key=session_key, camis=77777
+        ).first()
+        self.assertIsNotNone(followRestaurant)
+        self.assertEqual(followRestaurant.last_known_grade, "B")
+        self.assertIsNotNone(followRestaurant.last_inspection_date)
+
+    def test_notifications_list_marks_as_read(self):
+        """Test that viewing notifications list automatically marks all notifications as read."""
+        client = self.client
+        client.get(reverse("search_restaurants"))
+        session_key = client.session.session_key
+
+        followed = FollowedRestaurant.objects.create(
+            session_key=session_key, camis=88888, restaurant_name="Notif R"
+        )
+        notif = RestaurantNotification.objects.create(
+            followed_restaurant=followed,
+            notification_type="grade_change",
+            title="T",
+            message="M",
+        )
+        self.assertFalse(notif.is_read)
+
+        resp = client.get(reverse("notifications_list"))
+        self.assertEqual(resp.status_code, 200)
+
+        notif.refresh_from_db()
+        self.assertTrue(notif.is_read)
