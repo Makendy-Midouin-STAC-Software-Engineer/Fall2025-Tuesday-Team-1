@@ -848,9 +848,10 @@ class SecurityTests(TestCase):
 
         self.assertTrue(RestaurantInspection.objects.exists())
 
+
 class ModelStringAndHoursTests(TestCase):
     """Tests for model string representations and time-based properties."""
-    
+
     def test_ownerrestaurant_str(self):
         """Test that OwnerRestaurant string includes username and restaurant name."""
         user = User.objects.create_user(username="owner1", password="pass")
@@ -870,7 +871,9 @@ class ModelStringAndHoursTests(TestCase):
 
     def test_restaurantdetails_hours_today_and_is_open(self):
         """Test that RestaurantDetails correctly determines today's hours and open status."""
-        restuarantDetails = RestaurantDetails.objects.create(camis=22222, restaurant_name="R2")
+        restuarantDetails = RestaurantDetails.objects.create(
+            camis=22222, restaurant_name="R2"
+        )
 
         self.assertEqual(restuarantDetails.hours_today, "Hours not available")
         self.assertFalse(restuarantDetails.is_open_now)
