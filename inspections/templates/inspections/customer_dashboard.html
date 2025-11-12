@@ -1,0 +1,34 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Customer Dashboard</title>
+    <link rel="stylesheet" href="{% static 'inspections/style.css' %}">
+</head>
+<body class="dark-mode">
+    <div class="container">
+        <h1>Customer Dashboard</h1>
+        <h2>Your Favorites</h2>
+        {% if favorites %}
+            <ul>
+            {% for fav in favorites %}
+                <li>{{ fav.restaurant_name }}</li>
+            {% endfor %}
+            </ul>
+        {% else %}
+            <p>No favorites yet.</p>
+        {% endif %}
+        <h2>Your Followed Restaurants</h2>
+        {% if followed %}
+            <ul>
+            {% for follow in followed %}
+                <li>{{ follow.restaurant_name }}</li>
+            {% endfor %}
+            </ul>
+        {% else %}
+            <p>No followed restaurants yet.</p>
+        {% endif %}
+    </div>
+</body>
+</html>

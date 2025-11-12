@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block content %}
+  <h1>Review</h1>
+  <form method="post">
+    {% csrf_token %}
+    <label for="restaurant_name">Restaurant Name:</label>
+    <input type="text" name="restaurant_name" id="restaurant_name" value="{{ restaurant_name }}"><br>
+    <label for="review_text">Review:</label>
+    <textarea name="review_text" id="review_text"></textarea><br>
+    <label for="rating">Rating:</label>
+    <input type="number" name="rating" id="rating" min="1" max="5"><br>
+    <button type="submit">Submit</button>
+  </form>
+{% endblock %}

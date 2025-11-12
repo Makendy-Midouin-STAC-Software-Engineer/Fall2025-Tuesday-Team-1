@@ -61,7 +61,7 @@
                         } else {
                             heart.textContent = '🤍';
                             btn.classList.remove('favorited');
-                            btn.title = 'Add to favorites';
+                            // Removed stray template tag and misplaced code
                         }
                         
                         // Show brief message
@@ -154,6 +154,9 @@
             <a href="{% url 'followed_restaurants' %}" class="nav-link">🔔 Following</a>
             <a href="{% url 'notifications_list' %}" class="nav-link">📢 Notifications</a>
             <span style="margin-left: 30px;"></span>
+            <a href="{% url 'customer_signup' %}" class="nav-link">Customer Sign Up</a>
+            <a href="{% url 'customer_login' %}" class="nav-link">Customer Login</a>
+            <span style="margin-left: 10px;"></span>
             <a href="{% url 'owner_login' %}" class="nav-link">Owner Login</a>
             <a href="{% url 'owner_signup' %}" class="nav-link">Owner Sign Up</a>
         </nav>
@@ -205,11 +208,6 @@
                 <h2>Results ({{ restaurants|length }})</h2>
             {% endif %}
             
-            {% if results_limited %}
-                <div class="results-notice">
-                    <p>⚡ Showing first 200 restaurants for performance. Try more specific search terms to narrow results.</p>
-                </div>
-            {% endif %}
 
             {% if restaurants %}
                 <ul class="restaurant-list">
@@ -261,7 +259,7 @@
                                 {% if r.reviews %}
                                     <div class="reviews-section">
                                         <h4>Recent Reviews:</h4>
-                                        {% for review in r.reviews %}
+                                            {% for review in r.reviews %}
                                             <div class="review-item">
                                                 <div class="review-header">
                                                     <span class="reviewer">{{ review.reviewer_name }}</span>
@@ -272,7 +270,8 @@
                                             </div>
                                         {% endfor %}
                                     </div>
-                                {% endif %}
+                                    {% endif %}
+                                </div>
 
                                 <!-- Add Review Form -->
                                 <div class="add-review-section">
@@ -322,6 +321,7 @@
                         </li>
                     {% endfor %}
                 </ul>
+            {% endif %}
                 
                 <!-- Pagination Controls -->
                 {% if paginator and paginator.num_pages > 1 %}
@@ -344,17 +344,8 @@
                     </div>
                 {% endif %}
                 
-            {% else %}
-                <p>
-                    No results found
-                    {% if query %} for "{{ query }}"{% endif %}
-                    {% if cuisine %}{% if query %}, {% else %} for {% endif %}cuisine "{{ cuisine }}"{% endif %}
-                    {% if zipcode %}{% if query or cuisine %}, {% else %} for {% endif %}zipcode "{{ zipcode }}"{% endif %}
-                    {% if borough %}{% if query or cuisine or zipcode %}, {% else %} for {% endif %}borough "{{ borough }}"{% endif %}.
-                </p>
-            {% endif %}
         {% else %}
-            <h2>Ready to explore? Search by restaurant name, cuisine, zipcode, or borough.</h2>
+            <!-- Only show loading or nothing -->
         {% endif %}
     </div>
 

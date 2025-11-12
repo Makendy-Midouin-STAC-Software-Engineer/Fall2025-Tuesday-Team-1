@@ -1,22 +1,84 @@
 from django.shortcuts import render, redirect
-from inspections.models import (
-    RestaurantInspection,
-    RestaurantReview,
-    FavoriteRestaurant,
-    FollowedRestaurant,
-    RestaurantNotification,
-)
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth import login, logout
+from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
+from django.contrib.auth.models import User
+
 from django.db.models import Q
 from datetime import date
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 
-# Auth imports
-from django.contrib.auth import login
-from django.contrib.auth.forms import AuthenticationForm
-from django.contrib.auth.decorators import login_required
+from inspections.models import (
+    RestaurantInspection,
+    RestaurantReview,
+    FavoriteRestaurant,
+    FollowedRestaurant,
+    RestaurantNotification,
+    RestaurantDetails,
+    RestaurantMonthlySales,
+    OwnerRestaurant,
+)
+
 from .forms import OwnerSignUpForm
+
+
+def customer_welcome(request):
+    return render(request, "inspections/customer_welcome.html")
+
+
+def customer_signup(request):
+    if request.method == "POST":
+        form = UserCreationForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            login(request, user)
+            # Sync session favorites/followed to user
+            session_key = request.session.session_key
+            if session_key:
+                FavoriteRestaurant.objects.filter(
+                    session_key=session_key, user__isnull=True
+                ).update(user=user)
+                FollowedRestaurant.objects.filter(
+                    session_key=session_key, user__isnull=True
+                ).update(user=user)
+            return redirect("search_restaurants")
+    else:
+        form = UserCreationForm()
+    return render(request, "inspections/customer_signup.html", {"form": form})
+
+
+def customer_login(request):
+    if request.method == "POST":
+        form = AuthenticationForm(request, data=request.POST)
+        if form.is_valid():
+            user = form.get_user()
+            login(request, user)
+            # Sync session favorites/followed to user
+            session_key = request.session.session_key
+            if session_key:
+                FavoriteRestaurant.objects.filter(
+                    session_key=session_key, user__isnull=True
+                ).update(user=user)
+                FollowedRestaurant.objects.filter(
+                    session_key=session_key, user__isnull=True
+                ).update(user=user)
+            return redirect("search_restaurants")
+    else:
+        form = AuthenticationForm()
+    return render(request, "inspections/customer_login.html", {"form": form})
+
+
+@login_required
+def customer_dashboard(request):
+    favorites = FavoriteRestaurant.objects.filter(user=request.user)
+    followed = FollowedRestaurant.objects.filter(user=request.user)
+    return render(
+        request,
+        "inspections/customer_dashboard.html",
+        {"favorites": favorites, "followed": followed},
+    )
 
 
 def search_restaurants(request):
@@ -211,6 +273,7 @@ def search_restaurants(request):
 
 def add_review(request):
     """Handle adding new restaurant reviews"""
+    restaurant_name = None
     if request.method == "POST":
         camis = request.POST.get("camis")
         restaurant_name = request.POST.get("restaurant_name")
@@ -226,10 +289,16 @@ def add_review(request):
                 rating=int(rating),
                 review_text=review_text,
             )
-
-    # Redirect back to search results
+            return render(
+                request,
+                "inspections/review_success.html",
+                {"restaurant_name": restaurant_name},
+            )
+    # If GET or invalid POST, try to get restaurant_name from form data if present
+    if not restaurant_name:
+        restaurant_name = request.POST.get("restaurant_name", "")
     return render(
-        request, "inspections/review_success.html", {"restaurant_name": restaurant_name}
+        request, "inspections/add_review.html", {"restaurant_name": restaurant_name}
     )
 
 
@@ -309,17 +378,74 @@ def owner_login(request):
 
 @login_required
 def owner_dashboard(request):
-    # For demo: show all restaurants (in real app, filter by ownership)
-    restaurants = RestaurantInspection.objects.all()[:20]
-    # Show rating for each
-    restaurant_ratings = [
-        {"restaurant": r, "rating": RestaurantInspection.get_restaurant_rating(r.CAMIS)}
-        for r in restaurants
-    ]
+    from .models import OwnerRestaurant
+
+    add_success = None
+    if request.method == "POST" and "add_camis" in request.POST:
+        camis = request.POST.get("add_camis").strip()
+        restaurant = RestaurantInspection.objects.filter(CAMIS=camis).first()
+        if restaurant:
+            OwnerRestaurant.objects.get_or_create(
+                user=request.user, restaurant=restaurant
+            )
+            add_success = restaurant.DBA
+    owner_restaurants = OwnerRestaurant.objects.filter(user=request.user)
+    dashboard_data = []
+    for entry in owner_restaurants:
+        r = entry.restaurant
+        rating = RestaurantInspection.get_restaurant_rating(r.CAMIS)
+        reviews = RestaurantReview.objects.filter(camis=r.CAMIS).order_by(
+            "-review_date"
+        )
+        import collections, re
+
+        keywords = []
+        for review in reviews[:10]:
+            words = re.findall(r"\w+", review.review_text.lower())
+            keywords.extend(words)
+        common_issues = [
+            w
+            for w, c in collections.Counter(keywords).most_common(5)
+            if w
+            not in [
+                "the",
+                "and",
+                "to",
+                "of",
+                "a",
+                "is",
+                "in",
+                "for",
+                "it",
+                "was",
+                "with",
+                "on",
+                "at",
+                "by",
+                "an",
+                "be",
+                "as",
+                "are",
+                "from",
+            ]
+        ]
+        alert = None
+        rating_threshold = 3.5
+        if rating["stars"] < rating_threshold:
+            alert = f"Alert: Rating dropped below {rating_threshold} stars! Immediate action recommended."
+        dashboard_data.append(
+            {
+                "restaurant": r,
+                "rating": rating,
+                "feedback_trends": common_issues,
+                "rating_alert": alert,
+                "reviews": reviews[:5],
+            }
+        )
     return render(
         request,
         "inspections/owner_dashboard.html",
-        {"restaurant_ratings": restaurant_ratings},
+        {"dashboard_data": dashboard_data, "add_success": add_success},
     )
 
 
@@ -363,9 +489,10 @@ def favorites_list(request):
         request.session.create()
 
     session_key = request.session.session_key
-
-    # Get user's favorites
-    favorites = FavoriteRestaurant.objects.filter(session_key=session_key)
+    if request.user.is_authenticated:
+        favorites = FavoriteRestaurant.objects.filter(user=request.user)
+    else:
+        favorites = FavoriteRestaurant.objects.filter(session_key=session_key)
 
     # Get detailed info for each favorite restaurant
     favorite_restaurants = []
@@ -463,9 +590,10 @@ def followed_restaurants(request):
         request.session.create()
 
     session_key = request.session.session_key
-
-    # Get user's followed restaurants
-    followed = FollowedRestaurant.objects.filter(session_key=session_key)
+    if request.user.is_authenticated:
+        followed = FollowedRestaurant.objects.filter(user=request.user)
+    else:
+        followed = FollowedRestaurant.objects.filter(session_key=session_key)
 
     # Get detailed info for each followed restaurant
     followed_restaurants_list = []
@@ -517,12 +645,14 @@ def notifications_list(request):
         request.session.create()
 
     session_key = request.session.session_key
-
-    # Get all notifications for this user's followed restaurants
-    notifications = RestaurantNotification.objects.filter(
-        followed_restaurant__session_key=session_key
-    ).order_by("-created_at")
-
+    if request.user.is_authenticated:
+        notifications = RestaurantNotification.objects.filter(
+            followed_restaurant__user=request.user
+        ).order_by("-created_at")
+    else:
+        notifications = RestaurantNotification.objects.filter(
+            followed_restaurant__session_key=session_key
+        ).order_by("-created_at")
     # Mark all notifications as read when viewed
     notifications.filter(is_read=False).update(is_read=True)
 
@@ -534,6 +664,17 @@ def notifications_list(request):
     return render(request, "inspections/notifications.html", context)
 
 
+# Logout views for consumer and owner
+def customer_logout(request):
+    logout(request)
+    return redirect("search_restaurants")
+
+
+def owner_logout(request):
+    logout(request)
+    return redirect("owner_login")
+
+
 @require_POST
 def update_notification_preferences(request):
     """Update notification preferences for a followed restaurant"""
@@ -543,6 +684,11 @@ def update_notification_preferences(request):
 
     if not camis or not notification_type:
         return JsonResponse({"error": "Missing parameters"}, status=400)
+
+    # Validate notification_type BEFORE database lookup
+    valid_types = ["grade_changes", "new_inspections", "violations"]
+    if notification_type not in valid_types:
+        return JsonResponse({"error": "Invalid notification type"}, status=400)
 
     # Ensure session exists
     if not request.session.session_key:
@@ -560,8 +706,6 @@ def update_notification_preferences(request):
             followed.notify_new_inspections = enabled
         elif notification_type == "violations":
             followed.notify_violations = enabled
-        else:
-            return JsonResponse({"error": "Invalid notification type"}, status=400)
 
         followed.save()
 

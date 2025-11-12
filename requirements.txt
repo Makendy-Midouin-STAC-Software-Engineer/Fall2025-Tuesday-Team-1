@@ -1,10 +1,32 @@
+asgiref==3.10.0
+bcrypt==5.0.0
+black==25.9.0
+certifi==2025.10.5
+charset-normalizer==3.4.4
+click==8.3.0
+colorama==0.4.6
+coverage==6.5.0
+coveralls==3.3.1
 Django==5.2.6
+docopt==0.6.2
+flake8==7.3.0
+gunicorn==21.2.0
+idna==3.11
+mccabe==0.7.0
+mypy_extensions==1.1.0
+numpy==2.3.4
+packaging==25.0
+pandas==2.3.3
+pathspec==0.12.1
+platformdirs==4.5.0
+pycodestyle==2.14.0
+pyflakes==3.4.0
+python-dateutil==2.9.0.post0
+pytokens==0.2.0
+pytz==2025.2
+requests==2.32.5
+six==1.17.0
+sqlparse==0.5.3
+tzdata==2025.2
+urllib3==2.5.0
 whitenoise==6.11.0
-bcrypt==5.0.0       # only if you use it for password hashing
-gunicorn==21.2.0    # WSGI server
-
-# Development and CI/CD dependencies
-black>=23.0.0       # Code formatting
-flake8>=6.0.0       # Linting
-coverage>=6.2,<7.0  # Code coverage (compatible with coveralls)
-coveralls>=3.3.1    # Coverage reporting

@@ -1,0 +1,17 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Welcome to NYC Restaurant Search</title>
+    <link rel="stylesheet" href="{% static 'inspections/style.css' %}">
+</head>
+<body class="dark-mode">
+    <div class="container">
+        <h1>Welcome!</h1>
+        <p>Sign up to save your favorites and follow restaurants across devices.</p>
+        <a href="{% url 'customer_signup' %}" class="btn">Sign Up</a>
+        <p>Already have an account? <a href="{% url 'customer_login' %}">Log in here</a>.</p>
+    </div>
+</body>
+</html>
