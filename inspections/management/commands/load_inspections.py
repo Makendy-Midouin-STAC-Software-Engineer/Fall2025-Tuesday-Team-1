@@ -1,4 +1,3 @@
-import pandas as pd
 from django.core.management.base import BaseCommand
 from inspections.models import RestaurantInspection
 
@@ -16,6 +15,14 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         csv_file = options["csv_file"]
+
+        # Import pandas here so missing dependency errors mention the csv_file in tests
+        try:
+            import pandas as pd
+        except ImportError as e:
+            raise Exception(
+                f"Error loading {csv_file}: missing dependency pandas ({e})"
+            )
 
         if options["truncate"]:
             self.stdout.write("Deleting all existing RestaurantInspection records...")

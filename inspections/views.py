@@ -56,6 +56,7 @@ from .models import (
     FollowedRestaurant,
     RestaurantNotification,
     RestaurantDetails,
+    OwnerRestaurant,
 )
 from .forms import OwnerSignUpForm
 
@@ -389,12 +390,39 @@ def owner_login(request):
 
 @login_required
 def owner_dashboard(request):
-    # Show all restaurants, or filter by another valid field if needed
-    owned_restaurants = RestaurantDetails.objects.all()
+    # Build dashboard data for the logged-in owner
+    owned = OwnerRestaurant.objects.filter(user=request.user).select_related(
+        "restaurant"
+    )
+
+    dashboard_data = []
+    for owner_rel in owned:
+        rest_inspection = owner_rel.restaurant
+        camis = rest_inspection.CAMIS
+        rating = RestaurantInspection.get_restaurant_rating(camis)
+
+        # Determine if an alert should be shown for low ratings (C or lower)
+        rating_alert = None
+        try:
+            grade = rating.get("grade")
+            if grade and grade in ["C"]:
+                rating_alert = f"Low rating: {grade}"
+        except Exception:
+            rating_alert = None
+
+        dashboard_data.append(
+            {
+                "owner_relationship": owner_rel,
+                "restaurant": rest_inspection,
+                "rating": rating,
+                "rating_alert": rating_alert,
+            }
+        )
+
     return render(
         request,
         "inspections/owner_dashboard.html",
-        {"owned_restaurants": owned_restaurants},
+        {"dashboard_data": dashboard_data},
     )
 
 
@@ -448,6 +476,18 @@ def toggle_follow(request):
             defaults={"restaurant_name": restaurant_name},
         )
 
+    # If newly created, populate last_known_grade and last_inspection_date from latest inspection
+    if created:
+        latest_inspection = (
+            RestaurantInspection.objects.filter(CAMIS=camis)
+            .order_by("-INSPECTION_DATE")
+            .first()
+        )
+        if latest_inspection:
+            follow.last_known_grade = latest_inspection.GRADE
+            follow.last_inspection_date = latest_inspection.INSPECTION_DATE
+            follow.save()
+
     is_followed = created
     message = ""
     if created:
@@ -472,7 +512,35 @@ def favorites_list(request):
     else:
         favorites = FavoriteRestaurant.objects.filter(session_key=session_key)
 
-    context = {"favorites": favorites, "total_favorites": favorites.count()}
+    # Build structure expected by template: a list of dicts with favorite, restaurant, rating
+    favorite_restaurants = []
+    for fav in favorites:
+        restaurant = RestaurantInspection.objects.filter(CAMIS=fav.camis).first()
+        rating = (
+            RestaurantInspection.get_restaurant_rating(fav.camis)
+            if restaurant
+            else {"stars": 0, "grade": "N/A", "inspection_count": 0}
+        )
+        favorite_restaurants.append(
+            {
+                "favorite": fav,
+                "restaurant": (
+                    restaurant
+                    if restaurant
+                    else type(
+                        "obj",
+                        (object,),
+                        {"CAMIS": fav.camis, "DBA": fav.restaurant_name},
+                    )
+                ),
+                "rating": rating,
+            }
+        )
+
+    context = {
+        "favorite_restaurants": favorite_restaurants,
+        "total_favorites": favorites.count(),
+    }
     return render(request, "inspections/favorites_list.html", context)
 
 
