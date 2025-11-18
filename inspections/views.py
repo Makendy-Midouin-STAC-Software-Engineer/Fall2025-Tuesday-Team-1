@@ -1,11 +1,12 @@
-
-
 def owner_logout(request):
     """Log out an owner and redirect to owner login."""
     logout(request)
     return redirect("owner_login")
+
+
 # --- Add Review ---
 from django.views.decorators.http import require_http_methods
+
 
 @require_http_methods(["GET", "POST"])
 def add_review(request):
@@ -24,11 +25,19 @@ def add_review(request):
                 rating=int(rating),
                 review_text=review_text,
             )
-            return render(request, "inspections/review_success.html", {"restaurant_name": restaurant_name})
+            return render(
+                request,
+                "inspections/review_success.html",
+                {"restaurant_name": restaurant_name},
+            )
         # If missing data, fall through to re-render form with error
     # For GET or invalid POST, show the form
     restaurant_name = request.GET.get("restaurant_name", "")
-    return render(request, "inspections/add_review.html", {"restaurant_name": restaurant_name})
+    return render(
+        request, "inspections/add_review.html", {"restaurant_name": restaurant_name}
+    )
+
+
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
@@ -50,15 +59,21 @@ from .models import (
 )
 from .forms import OwnerSignUpForm
 
+
 # Helper to check if a restaurant is favorited by the current user/session
 def is_restaurant_favorited(request, camis):
     if request.user.is_authenticated:
-        return FavoriteRestaurant.objects.filter(user=request.user, camis=camis).exists()
+        return FavoriteRestaurant.objects.filter(
+            user=request.user, camis=camis
+        ).exists()
     else:
         session_key = request.session.session_key
         if not session_key:
             return False
-        return FavoriteRestaurant.objects.filter(session_key=session_key, camis=camis).exists()
+        return FavoriteRestaurant.objects.filter(
+            session_key=session_key, camis=camis
+        ).exists()
+
 
 # --- Authentication and session sync ---
 def customer_welcome(request):
@@ -109,7 +124,12 @@ def customer_login(request):
 def customer_dashboard(request):
     favorites = FavoriteRestaurant.objects.filter(user=request.user)
     followed = FollowedRestaurant.objects.filter(user=request.user)
-    return render(request, "inspections/customer_dashboard.html", {"favorites": favorites, "followed": followed})
+    return render(
+        request,
+        "inspections/customer_dashboard.html",
+        {"favorites": favorites, "followed": followed},
+    )
+
 
 # --- Search and listing ---
 def search_restaurants(request):
@@ -127,7 +147,9 @@ def search_restaurants(request):
     if query or cuisine or zipcode or borough:
         search_filter = Q()
         if query:
-            search_filter &= Q(DBA__icontains=query) | Q(CUISINE_DESCRIPTION__icontains=query)
+            search_filter &= Q(DBA__icontains=query) | Q(
+                CUISINE_DESCRIPTION__icontains=query
+            )
         if cuisine and cuisine != "All Cuisines":
             search_filter &= Q(CUISINE_DESCRIPTION__icontains=cuisine)
         if zipcode:
@@ -139,25 +161,31 @@ def search_restaurants(request):
         if borough and borough != "All Boroughs":
             search_filter &= Q(BORO__iexact=borough)
 
-        inspections = RestaurantInspection.objects.filter(search_filter).order_by("CAMIS", "-INSPECTION_DATE")
+        inspections = RestaurantInspection.objects.filter(search_filter).order_by(
+            "CAMIS", "-INSPECTION_DATE"
+        )
         seen_camis = set()
         limited_restaurants = []
         for inspection in inspections:
             if inspection.CAMIS not in seen_camis:
                 seen_camis.add(inspection.CAMIS)
-                limited_restaurants.append({
-                    "CAMIS": inspection.CAMIS,
-                    "DBA": inspection.DBA,
-                    "BUILDING": inspection.BUILDING,
-                    "STREET": inspection.STREET,
-                    "BORO": inspection.BORO,
-                    "ZIPCODE": inspection.ZIPCODE,
-                    "CUISINE_DESCRIPTION": inspection.CUISINE_DESCRIPTION,
-                })
+                limited_restaurants.append(
+                    {
+                        "CAMIS": inspection.CAMIS,
+                        "DBA": inspection.DBA,
+                        "BUILDING": inspection.BUILDING,
+                        "STREET": inspection.STREET,
+                        "BORO": inspection.BORO,
+                        "ZIPCODE": inspection.ZIPCODE,
+                        "CUISINE_DESCRIPTION": inspection.CUISINE_DESCRIPTION,
+                    }
+                )
         camis_list = [rest["CAMIS"] for rest in limited_restaurants]
         latest_inspections = {}
         if camis_list:
-            for inspection in RestaurantInspection.objects.filter(CAMIS__in=camis_list).order_by("CAMIS", "-INSPECTION_DATE"):
+            for inspection in RestaurantInspection.objects.filter(
+                CAMIS__in=camis_list
+            ).order_by("CAMIS", "-INSPECTION_DATE"):
                 if inspection.CAMIS not in latest_inspections:
                     latest_inspections[inspection.CAMIS] = inspection
         restaurants = []
@@ -181,26 +209,36 @@ def search_restaurants(request):
                 stars = 0
                 grade = "N/A"
                 description = "No grade available"
-            restaurants.append({
-                "info": type("obj", (object,), {
-                    "CAMIS": rest_data["CAMIS"],
-                    "DBA": rest_data["DBA"],
-                    "BUILDING": rest_data["BUILDING"],
-                    "STREET": rest_data["STREET"],
-                    "BORO": rest_data["BORO"],
-                    "ZIPCODE": rest_data["ZIPCODE"],
-                    "CUISINE_DESCRIPTION": rest_data["CUISINE_DESCRIPTION"],
-                }),
-                "rating": {
-                    "stars": stars,
-                    "grade": grade,
-                    "description": description,
-                    "inspection_count": 1,
-                    "latest_inspection": (latest_inspection.INSPECTION_DATE if latest_inspection else None),
-                },
-                "reviews": [],
-                "citations": [],
-            })
+            restaurants.append(
+                {
+                    "info": type(
+                        "obj",
+                        (object,),
+                        {
+                            "CAMIS": rest_data["CAMIS"],
+                            "DBA": rest_data["DBA"],
+                            "BUILDING": rest_data["BUILDING"],
+                            "STREET": rest_data["STREET"],
+                            "BORO": rest_data["BORO"],
+                            "ZIPCODE": rest_data["ZIPCODE"],
+                            "CUISINE_DESCRIPTION": rest_data["CUISINE_DESCRIPTION"],
+                        },
+                    ),
+                    "rating": {
+                        "stars": stars,
+                        "grade": grade,
+                        "description": description,
+                        "inspection_count": 1,
+                        "latest_inspection": (
+                            latest_inspection.INSPECTION_DATE
+                            if latest_inspection
+                            else None
+                        ),
+                    },
+                    "reviews": [],
+                    "citations": [],
+                }
+            )
         if sort_by == "rating_high":
             restaurants.sort(key=lambda r: r["rating"]["stars"], reverse=True)
         elif sort_by == "rating_low":
@@ -208,7 +246,10 @@ def search_restaurants(request):
         elif sort_by == "name":
             restaurants.sort(key=lambda r: r["info"].DBA or "")
         elif sort_by == "latest_inspection":
-            restaurants.sort(key=lambda r: r["rating"]["latest_inspection"] or date(1900, 1, 1), reverse=True)
+            restaurants.sort(
+                key=lambda r: r["rating"]["latest_inspection"] or date(1900, 1, 1),
+                reverse=True,
+            )
         elif sort_by == "grade":
             grade_order = {"A": 1, "B": 2, "C": 3, "N": 4, "P": 5, "Z": 6}
             restaurants.sort(key=lambda r: grade_order.get(r["rating"]["grade"], 7))
@@ -249,6 +290,7 @@ def search_restaurants(request):
     }
     return render(request, "inspections/search.html", context)
 
+
 # --- Notifications ---
 def notifications_list(request):
     """Display all notifications for followed restaurants (customer view). Always returns an HttpResponse."""
@@ -271,8 +313,6 @@ def notifications_list(request):
     return render(request, "inspections/notifications.html", context)
 
 
-
-
 def restaurant_detail(request, camis):
     """Display detailed information about a specific restaurant"""
     from inspections.models import RestaurantDetails
@@ -283,7 +323,9 @@ def restaurant_detail(request, camis):
         return render(request, "inspections/restaurant_not_found.html")
 
     # Get all inspections for this restaurant
-    all_inspections = RestaurantInspection.objects.filter(CAMIS=camis).order_by("-INSPECTION_DATE")
+    all_inspections = RestaurantInspection.objects.filter(CAMIS=camis).order_by(
+        "-INSPECTION_DATE"
+    )
 
     # Get rating information
     rating_info = RestaurantInspection.get_restaurant_rating(camis)
@@ -349,7 +391,11 @@ def owner_login(request):
 def owner_dashboard(request):
     # Show all restaurants, or filter by another valid field if needed
     owned_restaurants = RestaurantDetails.objects.all()
-    return render(request, "inspections/owner_dashboard.html", {"owned_restaurants": owned_restaurants})
+    return render(
+        request,
+        "inspections/owner_dashboard.html",
+        {"owned_restaurants": owned_restaurants},
+    )
 
 
 @require_POST
@@ -363,9 +409,13 @@ def toggle_favorite(request):
     session_key = request.session.session_key
 
     if request.user.is_authenticated:
-        fav, created = FavoriteRestaurant.objects.get_or_create(user=request.user, camis=camis)
+        fav, created = FavoriteRestaurant.objects.get_or_create(
+            user=request.user, camis=camis
+        )
     else:
-        fav, created = FavoriteRestaurant.objects.get_or_create(session_key=session_key, camis=camis)
+        fav, created = FavoriteRestaurant.objects.get_or_create(
+            session_key=session_key, camis=camis
+        )
 
     if not created:
         fav.delete()
@@ -386,14 +436,24 @@ def toggle_follow(request):
     session_key = request.session.session_key
 
     if request.user.is_authenticated:
-        follow, created = FollowedRestaurant.objects.get_or_create(user=request.user, camis=camis, defaults={"restaurant_name": restaurant_name})
+        follow, created = FollowedRestaurant.objects.get_or_create(
+            user=request.user,
+            camis=camis,
+            defaults={"restaurant_name": restaurant_name},
+        )
     else:
-        follow, created = FollowedRestaurant.objects.get_or_create(session_key=session_key, camis=camis, defaults={"restaurant_name": restaurant_name})
+        follow, created = FollowedRestaurant.objects.get_or_create(
+            session_key=session_key,
+            camis=camis,
+            defaults={"restaurant_name": restaurant_name},
+        )
 
     is_followed = created
     message = ""
     if created:
-        message = f"Now following {restaurant_name} - You'll get notified of health updates!"
+        message = (
+            f"Now following {restaurant_name} - You'll get notified of health updates!"
+        )
     else:
         follow.delete()
         message = f"Stopped following {restaurant_name}"
@@ -438,10 +498,14 @@ def followed_restaurants(request):
             rating_info = RestaurantInspection.get_restaurant_rating(follow.camis)
 
             # Get recent notifications for this restaurant
-            recent_notifications = RestaurantNotification.objects.filter(followed_restaurant=follow)[:3]
+            recent_notifications = RestaurantNotification.objects.filter(
+                followed_restaurant=follow
+            )[:3]
 
             # Get full notification history for dropdown
-            notification_history = RestaurantNotification.objects.filter(followed_restaurant=follow).order_by("-created_at")
+            notification_history = RestaurantNotification.objects.filter(
+                followed_restaurant=follow
+            ).order_by("-created_at")
 
             followed_restaurants_list.append(
                 {
@@ -455,9 +519,13 @@ def followed_restaurants(request):
 
     # Get all unread notifications for the user
     if request.user.is_authenticated:
-        all_notifications = RestaurantNotification.objects.filter(followed_restaurant__user=request.user, is_read=False).order_by("-created_at")[:10]
+        all_notifications = RestaurantNotification.objects.filter(
+            followed_restaurant__user=request.user, is_read=False
+        ).order_by("-created_at")[:10]
     else:
-        all_notifications = RestaurantNotification.objects.filter(followed_restaurant__session_key=session_key, is_read=False).order_by("-created_at")[:10]
+        all_notifications = RestaurantNotification.objects.filter(
+            followed_restaurant__session_key=session_key, is_read=False
+        ).order_by("-created_at")[:10]
 
     context = {
         "followed_restaurants": followed_restaurants_list,
@@ -475,9 +543,13 @@ def notifications_list(request):
 
     session_key = request.session.session_key
     if request.user.is_authenticated:
-        notifications = RestaurantNotification.objects.filter(followed_restaurant__user=request.user).order_by("-created_at")
+        notifications = RestaurantNotification.objects.filter(
+            followed_restaurant__user=request.user
+        ).order_by("-created_at")
     else:
-        notifications = RestaurantNotification.objects.filter(followed_restaurant__session_key=session_key).order_by("-created_at")
+        notifications = RestaurantNotification.objects.filter(
+            followed_restaurant__session_key=session_key
+        ).order_by("-created_at")
     # Mark all notifications as read when viewed
     notifications.filter(is_read=False).update(is_read=True)
     context = {
@@ -490,6 +562,7 @@ def notifications_list(request):
 def customer_logout(request):
     logout(request)
     return redirect("search_restaurants")
+
 
 @require_POST
 def update_notification_preferences(request):
