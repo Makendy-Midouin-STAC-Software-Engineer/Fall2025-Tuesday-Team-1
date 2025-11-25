@@ -40,6 +40,11 @@ def _split_env_list(value: str):
 ALLOWED_HOSTS = _split_env_list(
     os.getenv("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1")
 )
+# Add Elastic Beanstalk domain to allowed hosts
+ALLOWED_HOSTS += [
+    "cs450-team1-nyc.us-east-1.elasticbeanstalk.com",
+    ".us-east-1.elasticbeanstalk.com",  # Wildcard for any EB subdomain
+]
 
 # Trusted origins for CSRF when behind a proxy/hosted domain
 CSRF_TRUSTED_ORIGINS = _split_env_list(os.getenv("DJANGO_CSRF_TRUSTED_ORIGINS", ""))
