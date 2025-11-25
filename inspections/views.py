@@ -87,14 +87,23 @@ def customer_signup(request):
         if form.is_valid():
             user = form.save()
             login(request, user)
+            # Ensure session is created before accessing session_key
+            if not request.session.session_key:
+                request.session.create()
             session_key = request.session.session_key
             if session_key:
-                FavoriteRestaurant.objects.filter(
-                    session_key=session_key, user__isnull=True
-                ).update(user=user)
-                FollowedRestaurant.objects.filter(
-                    session_key=session_key, user__isnull=True
-                ).update(user=user)
+                try:
+                    FavoriteRestaurant.objects.filter(
+                        session_key=session_key, user__isnull=True
+                    ).update(user=user)
+                    FollowedRestaurant.objects.filter(
+                        session_key=session_key, user__isnull=True
+                    ).update(user=user)
+                except Exception as e:
+                    # Log error but don't fail signup
+                    import logging
+                    logger = logging.getLogger(__name__)
+                    logger.warning(f"Error syncing session data: {e}")
             return redirect("search_restaurants")
     else:
         form = UserCreationForm()
