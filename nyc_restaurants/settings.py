@@ -75,7 +75,8 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
-    "nyc_restaurants.middleware.DisableHostCheckMiddleware",
+    # DisableHostCheckMiddleware removed - ALLOWED_HOSTS is now properly configured
+    # "nyc_restaurants.middleware.DisableHostCheckMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -121,6 +122,9 @@ SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 # Use secure cookies when not in DEBUG
 SESSION_COOKIE_SECURE = not DEBUG
 CSRF_COOKIE_SECURE = not DEBUG
+# Allow CSRF cookie to work on both HTTP and HTTPS for Elastic Beanstalk
+CSRF_COOKIE_HTTPONLY = False
+CSRF_USE_SESSIONS = False
 
 
 # Password validation
