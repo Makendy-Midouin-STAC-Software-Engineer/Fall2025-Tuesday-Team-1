@@ -120,11 +120,14 @@ DATABASES = {
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 # Use secure cookies when not in DEBUG
-SESSION_COOKIE_SECURE = not DEBUG
-CSRF_COOKIE_SECURE = not DEBUG
+# For Elastic Beanstalk, allow HTTP initially to avoid CSRF issues
+SESSION_COOKIE_SECURE = False  # Set to True if using HTTPS
+CSRF_COOKIE_SECURE = False  # Set to True if using HTTPS
 # Allow CSRF cookie to work on both HTTP and HTTPS for Elastic Beanstalk
 CSRF_COOKIE_HTTPONLY = False
 CSRF_USE_SESSIONS = False
+# Set CSRF cookie domain to None to allow subdomains
+CSRF_COOKIE_DOMAIN = None
 
 
 # Password validation
