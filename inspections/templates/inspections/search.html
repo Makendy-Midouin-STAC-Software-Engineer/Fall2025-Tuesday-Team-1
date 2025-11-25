@@ -145,55 +145,72 @@
 </head>
 <body class="dark-mode">
     <div class="container">
+        <button id="theme-toggle" class="theme-toggle" title="Toggle Dark/Light Mode">🌙</button>
+        {% if user.is_authenticated %}
+        <div class="user-info">
+            <div class="welcome-message">Welcome back, {{ user.username }}!</div>
+            <a href="{% url 'customer_logout' %}" class="logout-btn">Log Out</a>
+        </div>
+        {% endif %}
         <h1>NYC Restaurant Search</h1>
         
         <!-- Navigation -->
         <nav class="navigation">
-            <a href="{% url 'search_restaurants' %}" class="nav-link active">🔍 Search</a>
-            <a href="{% url 'favorites_list' %}" class="nav-link">❤️ Favorites</a>
-            <a href="{% url 'followed_restaurants' %}" class="nav-link">🔔 Following</a>
-            <a href="{% url 'notifications_list' %}" class="nav-link">📢 Notifications</a>
-            <span style="margin-left: 30px;"></span>
-            <a href="{% url 'customer_signup' %}" class="nav-link">Customer Sign Up</a>
-            <a href="{% url 'customer_login' %}" class="nav-link">Customer Login</a>
-            <span style="margin-left: 10px;"></span>
-            <a href="{% url 'owner_login' %}" class="nav-link">Owner Login</a>
-            <a href="{% url 'owner_signup' %}" class="nav-link">Owner Sign Up</a>
+            <div class="nav-grid-container">
+                <!-- Left grid: Search, Favorites, Following, Notifications -->
+                <div class="nav-grid nav-grid-left">
+                    <a href="{% url 'search_restaurants' %}" class="nav-link active">🔍 Search</a>
+                    <a href="{% url 'favorites_list' %}" class="nav-link">❤️ Favorites</a>
+                    <a href="{% url 'followed_restaurants' %}" class="nav-link">🔔 Following</a>
+                    <a href="{% url 'notifications_list' %}" class="nav-link">📢 Notifications</a>
+                </div>
+                <!-- Right grid: Customer and Owner login/signup -->
+                <div class="nav-grid nav-grid-right">
+                    <a href="{% url 'customer_login' %}" class="nav-link">Customer Login</a>
+                    <a href="{% url 'customer_signup' %}" class="nav-link">Customer Sign Up</a>
+                    <a href="{% url 'owner_login' %}" class="nav-link">Owner Login</a>
+                    <a href="{% url 'owner_signup' %}" class="nav-link">Owner Sign Up</a>
+                </div>
+            </div>
         </nav>
 
         <!-- Search form -->
         <form method="get" class="search-form">
-            <input type="text" name="q" placeholder="Restaurant name..." value="{{ query }}">
-            <input type="text" name="zipcode" placeholder="Zipcode" value="{{ zipcode }}">
-            <select name="cuisine">
-                <option value="">All Cuisines</option>
-                {% for c in all_cuisines %}
-                    <option value="{{ c }}" {% if c == cuisine %}selected{% endif %}>
-                        {{ c }}
-                    </option>
-                {% endfor %}
-            </select>
-            <select name="borough">
-                <option value="">All Boroughs</option>
-                {% for b in all_boroughs %}
-                    <option value="{{ b }}" {% if b == borough %}selected{% endif %}>
-                        {{ b }}
-                    </option>
-                {% endfor %}
-            </select>
-            <select name="sort_by">
-                <option value="name" {% if sort_by == 'name' %}selected{% endif %}>Sort by Name</option>
-                <option value="rating_high" {% if sort_by == 'rating_high' %}selected{% endif %}>Highest Rating</option>
-                <option value="rating_low" {% if sort_by == 'rating_low' %}selected{% endif %}>Lowest Rating</option>
-                <option value="grade" {% if sort_by == 'grade' %}selected{% endif %}>Best Grade (A-C)</option>
-                <option value="latest_inspection" {% if sort_by == 'latest_inspection' %}selected{% endif %}>Latest Inspection</option>
-            </select>
-            <button type="submit" class="search-button">🔍 Search Restaurants</button>
+            <div class="search-form-row search-form-row-top">
+                <input type="text" name="q" placeholder="Restaurant name..." value="{{ query }}">
+                <input type="text" name="zipcode" placeholder="Zipcode" value="{{ zipcode }}">
+                <button type="submit" class="search-button">🔍 Search Restaurants</button>
+            </div>
+            <div class="search-form-row search-form-row-bottom">
+                <select name="cuisine">
+                    <option value="">All Cuisines</option>
+                    {% for c in all_cuisines %}
+                        <option value="{{ c }}" {% if c == cuisine %}selected{% endif %}>
+                            {{ c }}
+                        </option>
+                    {% endfor %}
+                </select>
+                <select name="borough">
+                    <option value="">All Boroughs</option>
+                    {% for b in all_boroughs %}
+                        <option value="{{ b }}" {% if b == borough %}selected{% endif %}>
+                            {{ b }}
+                        </option>
+                    {% endfor %}
+                </select>
+                <select name="sort_by">
+                    <option value="name" {% if sort_by == 'name' %}selected{% endif %}>Sort by Name</option>
+                    <option value="rating_high" {% if sort_by == 'rating_high' %}selected{% endif %}>Highest Rating</option>
+                    <option value="rating_low" {% if sort_by == 'rating_low' %}selected{% endif %}>Lowest Rating</option>
+                    <option value="grade" {% if sort_by == 'grade' %}selected{% endif %}>Best Grade (A-C)</option>
+                    <option value="latest_inspection" {% if sort_by == 'latest_inspection' %}selected{% endif %}>Latest Inspection</option>
+                </select>
+            </div>
         </form>
         
         
-        <div id="loading-indicator" style="display: none; text-align: center; padding: 20px; font-size: 18px; color: #007bff;">
-            🔄 Searching restaurants... This should be much faster now!
+        <div id="loading-indicator" style="display: none; text-align: center; padding: 30px; font-size: 32px; font-weight: bold; color: #DC143C; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);">
+            Fetching Restaurants...
         </div>
 
         <!-- Conditional Results -->
@@ -215,7 +232,7 @@
                         <li class="restaurant-item">
                             <div class="restaurant-header">
                                 <div class="restaurant-name-address">
-                                    <strong><a href="{% url 'restaurant_detail' r.info.CAMIS %}" style="color: #00e0ff; text-decoration: none;">{{ r.info.DBA }}</a></strong>
+                                    <strong><a href="{% url 'restaurant_detail' r.info.CAMIS %}" style="color: #DC143C; text-decoration: none;">{{ r.info.DBA }}</a></strong>
                                     <span class="address">{{ r.info.BUILDING }} {{ r.info.STREET }}, {{ r.info.BORO }}{% if r.info.ZIPCODE %} {{ r.info.ZIPCODE|floatformat:0 }}{% endif %}</span>
                                 </div>
                                 <div class="restaurant-rating">
@@ -271,7 +288,6 @@
                                         {% endfor %}
                                     </div>
                                     {% endif %}
-                                </div>
 
                                 <!-- Add Review Form -->
                                 <div class="add-review-section">
@@ -350,6 +366,41 @@
     </div>
 
     <script>
+    // Theme toggle functionality
+    (function() {
+        const themeToggle = document.getElementById('theme-toggle');
+        const body = document.body;
+        
+        // Check for saved theme preference or default to light mode
+        const currentTheme = localStorage.getItem('theme') || 'light';
+        
+        // Apply saved theme
+        if (currentTheme === 'dark') {
+            body.classList.add('dark-theme');
+            themeToggle.textContent = '☀️';
+            themeToggle.title = 'Switch to Light Mode';
+        } else {
+            body.classList.remove('dark-theme');
+            themeToggle.textContent = '🌙';
+            themeToggle.title = 'Switch to Dark Mode';
+        }
+        
+        // Toggle theme on button click
+        themeToggle.addEventListener('click', function() {
+            body.classList.toggle('dark-theme');
+            
+            if (body.classList.contains('dark-theme')) {
+                localStorage.setItem('theme', 'dark');
+                themeToggle.textContent = '☀️';
+                themeToggle.title = 'Switch to Light Mode';
+            } else {
+                localStorage.setItem('theme', 'light');
+                themeToggle.textContent = '🌙';
+                themeToggle.title = 'Switch to Dark Mode';
+            }
+        });
+    })();
+    
     // Show loading indicator on search form submission
     document.querySelector('form[method="get"]').addEventListener('submit', function() {
         document.getElementById('loading-indicator').style.display = 'block';
