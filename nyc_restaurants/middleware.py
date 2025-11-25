@@ -13,6 +13,9 @@ class DisableHostCheckMiddleware:
         self.get_response = get_response
 
     def __call__(self, request):
+        # Store the original host for CSRF validation
+        original_host = request.META.get("HTTP_HOST", "")
+        
         # Monkey patch the get_host method to always return a valid host
         original_get_host = request.get_host
 
@@ -20,11 +23,11 @@ class DisableHostCheckMiddleware:
             try:
                 return original_get_host()
             except DisallowedHost:
-                # Return localhost as a fallback to bypass validation
+                # Return the original host to preserve CSRF validation
                 logger.warning(
                     f"DisallowedHost bypassed for: {request.META.get('HTTP_HOST', 'unknown')}"
                 )
-                return "localhost"
+                return original_host or "localhost"
 
         request.get_host = patched_get_host
 
