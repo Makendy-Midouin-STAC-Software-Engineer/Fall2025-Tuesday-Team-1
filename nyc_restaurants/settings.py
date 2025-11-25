@@ -44,9 +44,16 @@ ALLOWED_HOSTS = _split_env_list(
 # Trusted origins for CSRF when behind a proxy/hosted domain
 CSRF_TRUSTED_ORIGINS = _split_env_list(os.getenv("DJANGO_CSRF_TRUSTED_ORIGINS", ""))
 # Add Elastic Beanstalk environment URLs for CSRF protection
+eb_url = os.environ.get("EB_URL", "")
+if eb_url:
+    CSRF_TRUSTED_ORIGINS += [
+        f"http://{eb_url}",
+        f"https://{eb_url}",
+    ]
+# Add specific Elastic Beanstalk domain
 CSRF_TRUSTED_ORIGINS += [
-    "http://nyc-app-env.eba-mivrpamz.us-east-1.elasticbeanstalk.com",
-    "https://nyc-app-env.eba-mivrpamz.us-east-1.elasticbeanstalk.com",
+    "http://cs450-team1-nyc.us-east-1.elasticbeanstalk.com",
+    "https://cs450-team1-nyc.us-east-1.elasticbeanstalk.com",
 ]
 
 # Application definition
