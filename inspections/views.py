@@ -82,32 +82,37 @@ def customer_welcome(request):
 
 
 def customer_signup(request):
-    if request.method == "POST":
-        form = UserCreationForm(request.POST)
-        if form.is_valid():
-            user = form.save()
-            login(request, user)
-            # Ensure session is created before accessing session_key
-            if not request.session.session_key:
-                request.session.create()
-            session_key = request.session.session_key
-            if session_key:
-                try:
-                    FavoriteRestaurant.objects.filter(
-                        session_key=session_key, user__isnull=True
-                    ).update(user=user)
-                    FollowedRestaurant.objects.filter(
-                        session_key=session_key, user__isnull=True
-                    ).update(user=user)
-                except Exception as e:
-                    # Log error but don't fail signup
-                    import logging
-                    logger = logging.getLogger(__name__)
-                    logger.warning(f"Error syncing session data: {e}")
-            return redirect("search_restaurants")
-    else:
-        form = UserCreationForm()
-    return render(request, "inspections/customer_signup.html", {"form": form})
+    import logging
+
+    logger = logging.getLogger(__name__)
+    try:
+        if request.method == "POST":
+            form = UserCreationForm(request.POST)
+            if form.is_valid():
+                user = form.save()
+                login(request, user)
+                # Ensure session is created before accessing session_key
+                if not request.session.session_key:
+                    request.session.create()
+                session_key = request.session.session_key
+                if session_key:
+                    try:
+                        FavoriteRestaurant.objects.filter(
+                            session_key=session_key, user__isnull=True
+                        ).update(user=user)
+                        FollowedRestaurant.objects.filter(
+                            session_key=session_key, user__isnull=True
+                        ).update(user=user)
+                    except Exception as e:
+                        # Log error but don't fail signup
+                        logger.warning(f"Error syncing session data: {e}")
+                return redirect("search_restaurants")
+        else:
+            form = UserCreationForm()
+        return render(request, "inspections/customer_signup.html", {"form": form})
+    except Exception as e:
+        logger.error(f"Error in customer_signup: {e}", exc_info=True)
+        raise
 
 
 def customer_login(request):
