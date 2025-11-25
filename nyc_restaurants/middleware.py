@@ -15,7 +15,7 @@ class DisableHostCheckMiddleware:
     def __call__(self, request):
         # Store the original host for CSRF validation
         original_host = request.META.get("HTTP_HOST", "")
-        
+
         # Monkey patch the get_host method to always return a valid host
         original_get_host = request.get_host
 
