@@ -1105,23 +1105,42 @@ select option {
 .nav-grid-container {
     display: flex;
     gap: 20px;
-    justify-content: center;
+    justify-content: space-between;
     align-items: flex-start;
+    width: 100%;
+    max-width: 900px;
+    margin: 0 auto;
 }
 
 .nav-grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    grid-template-rows: repeat(2, 1fr);
-    gap: 10px;
-    flex: 1;
-    max-width: 400px;
+    grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: repeat(2, auto);
+    gap: 18px 24px;
+    justify-items: center;
+    align-items: center;
+    width: 100%;
+    max-width: 900px;
+}
+
+.user-logged-in .nav-grid {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    gap: 32px;
+    flex: 1 1 0;
+    justify-content: center;
+    align-items: center;
+    min-width: 400px;
+    max-width: 900px;
 }
 
 .nav-link {
     display: flex;
     align-items: center;
     justify-content: center;
+    min-width: 120px;
+    margin: 0 4px;
     color: #DC143C;
     text-decoration: none;
     padding: 12px 16px;
