@@ -151,6 +151,9 @@ def search_restaurants(request):
     query = request.GET.get("q", "").strip()
     cuisine = request.GET.get("cuisine", "").strip()
     zipcode = request.GET.get("zipcode", "").strip()
+    # Server-side validation: only allow 5-digit numeric zipcodes
+    if zipcode and (not zipcode.isdigit() or len(zipcode) != 5):
+        zipcode = ""
     borough = request.GET.get("borough", "").strip()
     sort_by = request.GET.get("sort_by", "name").strip()
     page_number = request.GET.get("page", 1)

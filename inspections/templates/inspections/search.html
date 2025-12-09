@@ -8,6 +8,13 @@
     <link rel="stylesheet" href="{% static 'inspections/style.css' %}">
     <script>
     document.addEventListener("DOMContentLoaded", () => {
+        // Only allow numbers in zipcode field
+        const zipcodeInput = document.getElementById("zipcode-input");
+        if (zipcodeInput) {
+            zipcodeInput.addEventListener("input", function() {
+                this.value = this.value.replace(/[^0-9]/g, "");
+            });
+        }
         document.querySelectorAll(".restaurant-header").forEach(header => {
             header.addEventListener("click", (e) => {
                 // Don't toggle if clicking on favorite button or links
@@ -156,20 +163,18 @@
         
         <!-- Navigation -->
         <nav class="navigation">
-            <div class="nav-grid-container">
-                <!-- Left grid: Search, Favorites, Following, Notifications -->
-                <div class="nav-grid nav-grid-left">
+            <div class="nav-grid-container{% if user.is_authenticated %} user-logged-in{% endif %}">
+                <div class="nav-grid">
                     <a href="{% url 'search_restaurants' %}" class="nav-link active">🔍 Search</a>
                     <a href="{% url 'favorites_list' %}" class="nav-link">❤️ Favorites</a>
                     <a href="{% url 'followed_restaurants' %}" class="nav-link">🔔 Following</a>
                     <a href="{% url 'notifications_list' %}" class="nav-link">📢 Notifications</a>
-                </div>
-                <!-- Right grid: Customer and Owner login/signup -->
-                <div class="nav-grid nav-grid-right">
-                    <a href="{% url 'customer_login' %}" class="nav-link">Customer Login</a>
-                    <a href="{% url 'customer_signup' %}" class="nav-link">Customer Sign Up</a>
-                    <a href="{% url 'owner_login' %}" class="nav-link">Owner Login</a>
-                    <a href="{% url 'owner_signup' %}" class="nav-link">Owner Sign Up</a>
+                    {% if not user.is_authenticated %}
+                        <a href="{% url 'customer_login' %}" class="nav-link">Customer Login</a>
+                        <a href="{% url 'customer_signup' %}" class="nav-link">Customer Sign Up</a>
+                        <a href="{% url 'owner_login' %}" class="nav-link">Owner Login</a>
+                        <a href="{% url 'owner_signup' %}" class="nav-link">Owner Sign Up</a>
+                    {% endif %}
                 </div>
             </div>
         </nav>
@@ -178,9 +183,10 @@
         <form method="get" class="search-form">
             <div class="search-form-row search-form-row-top">
                 <input type="text" name="q" placeholder="Restaurant name..." value="{{ query }}">
-                <input type="text" name="zipcode" placeholder="Zipcode" value="{{ zipcode }}">
+                <input type="text" name="zipcode" id="zipcode-input" placeholder="Zipcode" value="{{ zipcode }}" autocomplete="off" inputmode="numeric" pattern="[0-9]*">
                 <button type="submit" class="search-button">🔍 Search Restaurants</button>
             </div>
+            <div id="zipcode-warning" style="color: #DC143C; display: none; font-size: 0.95em; margin-top: 4px;">Please enter a valid 5-digit zipcode.</div>
             <div class="search-form-row search-form-row-bottom">
                 <select name="cuisine">
                     <option value="">All Cuisines</option>
